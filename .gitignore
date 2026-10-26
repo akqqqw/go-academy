@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+frontend/node_modules/
+
+# build output
+frontend/dist/
+backend/bin/
+backend/go.sum.lock
+dist/
+build/
+
+# local data & runtime
+data/
+*.db
+*.db-shm
+*.db-wal
+tmp/
+.go-tmp/
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+.env
+.env.local

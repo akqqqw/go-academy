@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Go Academy — локальная платформа для изучения Golang: уроки, практика, заметки и карточки." />
+    <meta name="color-scheme" content="dark light" />
+    <title>Go Academy</title>
+    <script>
+      // Тема применяется до первой отрисовки, чтобы не было вспышки белого экрана.
+      (function () {
+        try {
+          var stored = localStorage.getItem('goacademy-theme');
+          var theme = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'dark';
+          var dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+          var motion = localStorage.getItem('goacademy-reduced-motion');
+          if (motion === 'true') document.documentElement.classList.add('reduced-motion');
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
