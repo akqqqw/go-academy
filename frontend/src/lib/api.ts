@@ -13,6 +13,7 @@ import type {
   FormatResponse,
   LessonCompletionResponse,
   LessonContentResponse,
+  AchievementsResponse,
   CardGrade,
   Flashcard,
   FlashcardInput,
@@ -244,6 +245,9 @@ export const api = {
     }),
 
   noteTags: () => request<TagsResponse>('/api/notes/tags'),
+
+  /** Достижения: каталог с прогрессом и сводка. */
+  achievements: () => request<AchievementsResponse>('/api/achievements'),
 
   /** Викторины: список с прогрессом, вопросы и проверка ответов. */
   quizzes: () => request<QuizzesResponse>('/api/quizzes'),

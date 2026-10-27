@@ -8,6 +8,7 @@ import {
   Settings,
   SquareTerminal,
   StickyNote,
+  Trophy,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -71,6 +72,13 @@ export const navItems: NavItem[] = [
     group: 'progress',
   },
   {
+    to: '/achievements',
+    label: 'Достижения',
+    icon: Trophy,
+    description: 'Награды и прогресс',
+    group: 'progress',
+  },
+  {
     to: '/settings',
     label: 'Настройки',
     icon: Settings,
@@ -94,6 +102,7 @@ export function sectionTitle(pathname: string) {
   if (pathname.startsWith('/notes')) return 'Заметки'
   if (pathname.startsWith('/flashcards')) return 'Карточки'
   if (pathname.startsWith('/quizzes')) return 'Тесты'
+  if (pathname.startsWith('/achievements')) return 'Достижения'
   if (pathname.startsWith('/progress')) return 'Прогресс'
   if (pathname.startsWith('/settings')) return 'Настройки'
   return 'Главная'

@@ -10,6 +10,7 @@ import { FlashcardsPage } from '@/pages/flashcards-page'
 import { LearningPage } from '@/pages/learning-page'
 import { NotesPage } from '@/pages/notes-page'
 import { PracticePage } from '@/pages/practice-page'
+import { AchievementsPage } from '@/pages/achievements-page'
 import { ProgressPage } from '@/pages/progress-page'
 import { QuizPage } from '@/pages/quiz-page'
 import { QuizzesPage } from '@/pages/quizzes-page'
@@ -112,6 +113,7 @@ export default function App() {
               <Route path="flashcards" element={<FlashcardsPage />} />
               <Route path="quizzes" element={<QuizzesPage />} />
               <Route path="quizzes/:quizId" element={<QuizPage />} />
+              <Route path="achievements" element={<AchievementsPage />} />
               <Route path="progress" element={<ProgressPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />

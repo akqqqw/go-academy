@@ -274,6 +274,16 @@ export interface Snapshot {
   plan: PlanItem[]
   goals: Goals
   course_percent: number
+  insights?: {
+    active_days: number
+    average_daily_seconds: number
+    best_day: { date?: string; seconds: number }
+    achievements: { unlocked: number; total: number }
+    cards_reviewed: number
+    reviews_today: number
+    exercises_solved: number
+    quizzes_passed: number
+  }
 }
 
 export interface Totals {
@@ -323,6 +333,7 @@ export interface DashboardResponse {
     percent: number
   }
   totals: Totals
+  achievements?: Achievement[]
 }
 
 export interface ActivityResponse {
@@ -783,4 +794,40 @@ export interface QuizResult {
   percent: number
   passed: boolean
   stats: QuizStats
+}
+
+/** Категории и уровни достижений. */
+export type AchievementCategory = 'lessons' | 'practice' | 'memory' | 'study'
+export type AchievementTier = 'bronze' | 'silver' | 'gold'
+
+export interface Achievement {
+  code: string
+  title: string
+  description: string
+  metric: string
+  target: number
+  unit: string
+  tier: AchievementTier
+  category: AchievementCategory
+  icon: string
+  current: number
+  percent: number
+  unlocked: boolean
+  unlocked_at?: string
+  remaining: number
+}
+
+export interface AchievementStats {
+  unlocked: number
+  total: number
+  bronze: number
+  silver: number
+  gold: number
+  percent: number
+  new: number
+}
+
+export interface AchievementsResponse {
+  achievements: Achievement[]
+  stats: AchievementStats
 }

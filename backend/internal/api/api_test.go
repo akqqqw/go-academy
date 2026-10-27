@@ -1509,3 +1509,91 @@ func TestQuizContentReload(t *testing.T) {
 		t.Errorf("после перечитывания = %v", body)
 	}
 }
+
+func TestAchievementsEndpoint(t *testing.T) {
+	env := newTestEnv(t)
+
+	resp, payload := env.do(t, http.MethodGet, "/api/achievements", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("достижения: статус = %d: %s", resp.StatusCode, payload)
+	}
+	body := decode(t, payload)
+	list := body["achievements"].([]any)
+	if len(list) < 15 {
+		t.Fatalf("достижений = %d, ожидалось не меньше 15", len(list))
+	}
+	stats := body["stats"].(map[string]any)
+	if stats["total"].(float64) != float64(len(list)) || stats["unlocked"].(float64) != 0 {
+		t.Errorf("сводка = %v", stats)
+	}
+	for _, item := range list {
+		achievement := item.(map[string]any)
+		for _, field := range []string{"code", "title", "description", "tier", "category", "icon"} {
+			if achievement[field] == "" {
+				t.Errorf("пустое поле %q у %v", field, achievement)
+			}
+		}
+		if achievement["unlocked"] != false {
+			t.Errorf("на чистой базе достижение открыто: %v", achievement)
+		}
+	}
+
+	// Завершаем урок — открывается «Первый шаг».
+	if resp, payload := env.do(t, http.MethodPost, "/api/lessons/m01-01/completed", nil); resp.StatusCode != http.StatusOK {
+		t.Fatalf("урок: %s", payload)
+	}
+	resp, payload = env.do(t, http.MethodGet, "/api/achievements", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("достижения: %s", payload)
+	}
+	body = decode(t, payload)
+	stats = body["stats"].(map[string]any)
+	if stats["unlocked"].(float64) < 1 || stats["new"].(float64) < 1 {
+		t.Errorf("после урока = %v", stats)
+	}
+	found := false
+	for _, item := range body["achievements"].([]any) {
+		achievement := item.(map[string]any)
+		if achievement["code"] != "first-step" {
+			continue
+		}
+		found = true
+		if achievement["unlocked"] != true || achievement["unlocked_at"] == "" || achievement["percent"].(float64) != 100 {
+			t.Errorf("first-step = %v", achievement)
+		}
+	}
+	if !found {
+		t.Error("нет достижения first-step")
+	}
+
+	// Повторный запрос не дублирует открытия.
+	_, payload = env.do(t, http.MethodGet, "/api/achievements", nil)
+	if decode(t, payload)["stats"].(map[string]any)["new"].(float64) != 0 {
+		t.Errorf("повторная проверка засчитала новые достижения: %s", payload)
+	}
+
+	// Прогресс и главная содержат счётчик достижений.
+	resp, payload = env.do(t, http.MethodGet, "/api/progress", nil)
+	insights := decode(t, payload)["snapshot"].(map[string]any)["insights"].(map[string]any)
+	achievements := insights["achievements"].(map[string]any)
+	if achievements["unlocked"].(float64) < 1 {
+		t.Errorf("в прогрессе нет достижений: %v", insights)
+	}
+	if insights["average_daily_seconds"] == nil {
+		t.Errorf("нет расширенной статистики: %v", insights)
+	}
+
+	resp, payload = env.do(t, http.MethodGet, "/api/dashboard", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("главная: %s", payload)
+	}
+	dashboard := decode(t, payload)
+	if len(dashboard["achievements"].([]any)) == 0 {
+		t.Errorf("на главной нет последних достижений")
+	}
+
+	// Неверный метод — 405, а не 404.
+	if resp, _ := env.do(t, http.MethodPost, "/api/achievements", nil); resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Errorf("метод POST: статус = %d", resp.StatusCode)
+	}
+}

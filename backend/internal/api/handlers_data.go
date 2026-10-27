@@ -101,6 +101,16 @@ func (s *Server) handleProgress(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "stats_error", err.Error())
 		return
 	}
+	// Достижения добавляются в срез прогресса, чтобы страница статистики
+	// показывала их без второго запроса.
+	if extras, err := s.achievementExtras(r); err == nil {
+		if _, stats, err := s.achievements.List(r.Context(), extras); err == nil {
+			snapshot.Insights.Achievements = progress.AchieveIn{
+				Unlocked: stats.Unlocked,
+				Total:    stats.Total,
+			}
+		}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"snapshot": snapshot, "totals": totals})
 }
 

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { ContinueCard } from '@/features/dashboard/continue-card'
 import { CourseProgress } from '@/features/dashboard/course-progress'
 import { RecentActivity } from '@/features/dashboard/recent-activity'
+import { AchievementsStrip } from '@/features/dashboard/achievements-strip'
 import { StatsGrid } from '@/features/dashboard/stats-grid'
 import { TodayPlan } from '@/features/dashboard/today-plan'
 import { useCourse, useDashboard } from '@/services/queries'
@@ -68,6 +69,10 @@ export function DashboardPage() {
 
           <StatsGrid snapshot={dashboard.data.snapshot} totals={dashboard.data.totals} />
 
+          {dashboard.data.achievements && dashboard.data.achievements.length > 0 ? (
+            <AchievementsStrip achievements={dashboard.data.achievements} snapshot={dashboard.data.snapshot} />
+          ) : null}
+
           <div className="grid gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <RecentActivity items={dashboard.data.recent} />
@@ -86,12 +91,12 @@ export function DashboardPage() {
 
           <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-line-strong px-4 py-3">
             <p className="text-[12px] leading-relaxed text-fg-muted">
-              Встроенный редактор Go с запуском кода уже работает в уроках и в разделе «Редактор».
-              Следующий этап — практические задачи с проверкой через настоящие Go-тесты.
+              Уроки, редактор с запуском кода, практика, заметки, карточки и тесты уже работают.
+              Прогресс и достижения считаются из локальной базы.
             </p>
             <Button asChild variant="ghost" size="sm">
-              <Link to="/learning">
-                К урокам
+              <Link to="/progress">
+                К статистике
                 <ArrowRight />
               </Link>
             </Button>

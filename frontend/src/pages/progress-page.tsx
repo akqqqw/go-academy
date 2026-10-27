@@ -1,4 +1,4 @@
-import { Activity, Clock3, Flame, Layers, ListChecks, Target } from 'lucide-react'
+import { Activity, CalendarCheck, Clock3, Flame, Layers, ListChecks, Target, Trophy, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -159,6 +159,73 @@ export function ProgressPage() {
             </CardContent>
           </Card>
         </div>
+      ) : null}
+
+      {snapshot?.insights ? (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2.5">
+            <CardTitle className="flex items-center gap-2 text-[13px]">
+              <TrendingUp className="size-4 text-primary" />
+              Расширенная статистика
+            </CardTitle>
+            <Button asChild variant="ghost" size="sm" className="h-7">
+              <Link to="/achievements">
+                Достижения
+                <Trophy className="size-3.5" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="grid gap-2 pt-2 pb-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                icon: CalendarCheck,
+                label: 'Дней занятий',
+                value: `${snapshot.insights.active_days}`,
+                hint: 'дней с любой активностью',
+              },
+              {
+                icon: Clock3,
+                label: 'В среднем за день',
+                value: formatDuration(snapshot.insights.average_daily_seconds),
+                hint: 'по активным дням',
+              },
+              {
+                icon: Flame,
+                label: 'Лучший день',
+                value: formatDuration(snapshot.insights.best_day.seconds),
+                hint: snapshot.insights.best_day.date
+                  ? new Date(`${snapshot.insights.best_day.date}T00:00:00`).toLocaleDateString('ru-RU', {
+                      day: '2-digit',
+                      month: 'long',
+                    })
+                  : 'пока нет данных',
+              },
+              {
+                icon: Trophy,
+                label: 'Достижения',
+                value: `${snapshot.insights.achievements.unlocked} из ${snapshot.insights.achievements.total}`,
+                hint: 'открыто наград',
+              },
+            ].map((item) => (
+              <div key={item.label} className="rounded-lg border border-line bg-surface-inset px-3 py-2">
+                <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-fg-subtle">
+                  <item.icon className="size-3" />
+                  {item.label}
+                </p>
+                <p className="mt-0.5 text-[15px] font-semibold tabular-nums text-fg">{item.value}</p>
+                <p className="text-[10.5px] text-fg-subtle">{item.hint}</p>
+              </div>
+            ))}
+            <div className="rounded-lg border border-line bg-surface-inset px-3 py-2 sm:col-span-2 lg:col-span-4">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-fg-muted">
+                <span>Решено задач: {snapshot.insights.exercises_solved}</span>
+                <span>Повторений карточек: {snapshot.insights.cards_reviewed}</span>
+                <span>Сдано тестов: {snapshot.insights.quizzes_passed}</span>
+                <span className="ml-auto text-fg-subtle">Все значения из локальной базы</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">

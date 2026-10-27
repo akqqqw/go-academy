@@ -36,6 +36,7 @@ type Server struct {
 	flashcards   *storage.Flashcards
 	quizStore    *quizzes.Store
 	quizAttempts *storage.Quizzes
+	achievements *storage.Achievements
 	exAttempts   *storage.ExerciseProgress
 	stats        *progress.Service
 	course       *course.Store
@@ -97,6 +98,7 @@ func New(cfg config.Config, db *database.DB, logger *slog.Logger) *Server {
 	if err := s.quizStore.Reload(); err != nil {
 		s.log.Warn("викторины не загружены", "error", err)
 	}
+	s.achievements = storage.NewAchievements(db, activity, s.notes)
 	s.handler = s.routes()
 	return s
 }
@@ -180,6 +182,9 @@ func (s *Server) routes() http.Handler {
 	s.handle(mux, http.MethodGet, "/api/activity", s.handleActivity)
 	s.handle(mux, http.MethodPost, "/api/activity/study", s.handleStudyPing)
 	s.handle(mux, http.MethodGet, "/api/activity/recent", s.handleRecent)
+
+	// Достижения.
+	s.handle(mux, http.MethodGet, "/api/achievements", s.handleAchievements)
 
 	// Поиск.
 	s.handle(mux, http.MethodGet, "/api/search", s.handleSearch)

@@ -1,4 +1,5 @@
 import type {
+  Achievement,
   ActivityResponse,
   BackupInfo,
   CourseResponse,
@@ -88,6 +89,16 @@ export const dashboardFixture: DashboardResponse = {
     ],
     goals: { minutes: 15, exercises: 3, cards: 10 },
     course_percent: 3,
+    insights: {
+      active_days: 12,
+      average_daily_seconds: 1500,
+      best_day: { date: '2026-10-18', seconds: 5400 },
+      achievements: { unlocked: 2, total: 5 },
+      cards_reviewed: 12,
+      reviews_today: 5,
+      exercises_solved: 0,
+      quizzes_passed: 0,
+    },
   },
   recent: [
     {
@@ -120,6 +131,39 @@ export const dashboardFixture: DashboardResponse = {
     percent: 3,
   },
   totals: { lessons: 104, exercises: 0, flashcards: 0, quizzes: 0 },
+  achievements: [
+    {
+      code: 'first-step',
+      title: 'Первый шаг',
+      description: 'Завершите первый урок курса',
+      metric: 'lessons_completed',
+      target: 1,
+      unit: 'урок',
+      tier: 'bronze' as const,
+      category: 'lessons' as const,
+      icon: 'footprints',
+      current: 3,
+      percent: 100,
+      unlocked: true,
+      unlocked_at: '2026-10-20T10:00:00Z',
+      remaining: 0,
+    },
+    {
+      code: 'five-lessons',
+      title: 'Разогрев',
+      description: 'Завершите 5 уроков',
+      metric: 'lessons_completed',
+      target: 5,
+      unit: 'уроков',
+      tier: 'bronze' as const,
+      category: 'lessons' as const,
+      icon: 'book-open',
+      current: 3,
+      percent: 60,
+      unlocked: false,
+      remaining: 2,
+    },
+  ],
 }
 
 const lessons = Array.from({ length: 7 }, (_, index) => ({
@@ -896,3 +940,93 @@ function buildQuizResult(correct: boolean): QuizResult {
 
 export const quizPassedFixture = buildQuizResult(true)
 export const quizFailedFixture = buildQuizResult(false)
+
+const achievementDefinitions: Achievement[] = [
+  {
+    code: 'first-step',
+    title: 'Первый шаг',
+    description: 'Завершите первый урок курса',
+    metric: 'lessons_completed',
+    target: 1,
+    unit: 'урок',
+    tier: 'bronze',
+    category: 'lessons',
+    icon: 'footprints',
+    current: 15,
+    percent: 100,
+    unlocked: true,
+    unlocked_at: '2026-10-20T10:00:00Z',
+    remaining: 0,
+  },
+  {
+    code: 'five-lessons',
+    title: 'Разогрев',
+    description: 'Завершите 5 уроков',
+    metric: 'lessons_completed',
+    target: 5,
+    unit: 'уроков',
+    tier: 'bronze',
+    category: 'lessons',
+    icon: 'book-open',
+    current: 15,
+    percent: 100,
+    unlocked: true,
+    unlocked_at: '2026-10-21T10:00:00Z',
+    remaining: 0,
+  },
+  {
+    code: 'ten-exercises',
+    title: 'Практик',
+    description: 'Решите 10 задач',
+    metric: 'exercises_solved',
+    target: 10,
+    unit: 'задач',
+    tier: 'silver',
+    category: 'practice',
+    icon: 'list-checks',
+    current: 4,
+    percent: 40,
+    unlocked: false,
+    remaining: 6,
+  },
+  {
+    code: 'hundred-reviews',
+    title: 'Сто повторений',
+    description: 'Сделайте 100 повторений карточек',
+    metric: 'card_reviews',
+    target: 100,
+    unit: 'повторений',
+    tier: 'silver',
+    category: 'memory',
+    icon: 'brain',
+    current: 40,
+    percent: 40,
+    unlocked: false,
+    remaining: 60,
+  },
+  {
+    code: 'streak-7',
+    title: 'Неделя привычки',
+    description: 'Серия из 7 дней подряд',
+    metric: 'streak_days',
+    target: 7,
+    unit: 'дней',
+    tier: 'silver',
+    category: 'study',
+    icon: 'flame',
+    current: 3,
+    percent: 43,
+    unlocked: false,
+    remaining: 4,
+  },
+]
+
+export const achievementsFixture = {
+  achievements: achievementDefinitions,
+  stats: { unlocked: 2, total: 5, bronze: 2, silver: 0, gold: 0, percent: 40, new: 0 },
+}
+
+export const achievementsEmptyFixture = {
+  achievements: [],
+  stats: { unlocked: 0, total: 0, bronze: 0, silver: 0, gold: 0, percent: 0, new: 0 },
+}

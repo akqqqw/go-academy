@@ -76,6 +76,30 @@ type PlanItem struct {
 	Route   string `json:"route"`
 }
 
+// Insights — расширенная статистика: активность по дням и достижения.
+type Insights struct {
+	ActiveDays      int       `json:"active_days"`
+	AverageSeconds  int       `json:"average_daily_seconds"`
+	BestDay         BestDay   `json:"best_day"`
+	Achievements    AchieveIn `json:"achievements"`
+	CardsReviewed   int       `json:"cards_reviewed"`
+	ReviewsToday    int       `json:"reviews_today"`
+	ExercisesSolved int       `json:"exercises_solved"`
+	QuizzesPassed   int       `json:"quizzes_passed"`
+}
+
+// BestDay — самый продуктивный день по времени занятий.
+type BestDay struct {
+	Date    string `json:"date,omitempty"`
+	Seconds int    `json:"seconds"`
+}
+
+// AchieveIn — счётчик открытых достижений.
+type AchieveIn struct {
+	Unlocked int `json:"unlocked"`
+	Total    int `json:"total"`
+}
+
 // Snapshot — полный срез прогресса для главной страницы и раздела «Прогресс».
 type Snapshot struct {
 	Lessons    LessonsStat   `json:"lessons"`
@@ -88,6 +112,7 @@ type Snapshot struct {
 	Plan       []PlanItem    `json:"plan"`
 	Goals      Goals         `json:"goals"`
 	CourseDone int           `json:"course_percent"`
+	Insights   Insights      `json:"insights,omitempty"`
 }
 
 // Goals — дневные цели из настроек.
@@ -200,7 +225,37 @@ func (s *Service) Snapshot(ctx context.Context, totals Totals) (Snapshot, error)
 	}
 	snap.Plan = BuildPlan(today, goals)
 	snap.CourseDone = percent(completed, totals.Lessons)
+
+	insights := Insights{
+		ActiveDays:      len(activeDays),
+		CardsReviewed:   cardsReviewed,
+		ExercisesSolved: solved,
+		QuizzesPassed:   quizzesPassed,
+	}
+	if len(activeDays) > 0 {
+		insights.AverageSeconds = totalSeconds / len(activeDays)
+	}
+	if best, err := s.bestDay(ctx); err == nil {
+		insights.BestDay = best
+	}
+	snap.Insights = insights
 	return snap, nil
+}
+
+// bestDay находит день с максимальным временем занятий.
+func (s *Service) bestDay(ctx context.Context) (BestDay, error) {
+	var date string
+	var seconds int
+	err := s.db.QueryRowContext(ctx, `
+		SELECT date, study_seconds FROM activity_days
+		ORDER BY study_seconds DESC, date ASC LIMIT 1`).Scan(&date, &seconds)
+	if err != nil {
+		return BestDay{}, err
+	}
+	if seconds == 0 {
+		return BestDay{}, nil
+	}
+	return BestDay{Date: date, Seconds: seconds}, nil
 }
 
 // BuildPlan формирует план на сегодня из фактической активности.
@@ -248,68 +303,9 @@ func BuildPlan(today storage.Day, goals Goals) []PlanItem {
 // CalcStreak считает текущую и рекордную серию дней подряд.
 //
 // Серия «жива», если сегодня или вчера была активность: иначе она прервана.
+// Реализация живёт в storage, чтобы достижения считали серию тем же кодом.
 func CalcStreak(days []time.Time, now time.Time) (current, longest int, todayActive bool) {
-	unique := map[string]time.Time{}
-	for _, day := range days {
-		local := day.In(now.Location())
-		unique[local.Format("2006-01-02")] = truncate(local)
-	}
-	if len(unique) == 0 {
-		return 0, 0, false
-	}
-
-	// Рекордная серия: проходим по всем дням по возрастанию.
-	ordered := make([]time.Time, 0, len(unique))
-	for _, day := range unique {
-		ordered = append(ordered, day)
-	}
-	sortDays(ordered)
-	run := 1
-	longest = 1
-	for i := 1; i < len(ordered); i++ {
-		if ordered[i].Sub(ordered[i-1]) == 24*time.Hour {
-			run++
-		} else {
-			run = 1
-		}
-		if run > longest {
-			longest = run
-		}
-	}
-
-	today := truncate(now)
-	_, hasToday := unique[today.Format("2006-01-02")]
-	yesterday := today.AddDate(0, 0, -1)
-	_, hasYesterday := unique[yesterday.Format("2006-01-02")]
-	todayActive = hasToday
-
-	cursor := today
-	if !hasToday {
-		if !hasYesterday {
-			return 0, longest, false
-		}
-		cursor = yesterday
-	}
-	for {
-		if _, ok := unique[cursor.Format("2006-01-02")]; !ok {
-			break
-		}
-		current++
-		cursor = cursor.AddDate(0, 0, -1)
-	}
-	return current, longest, todayActive
-}
-
-func truncate(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
-}
-
-func sortDays(days []time.Time) {
-	for i := 1; i < len(days); i++ {
-		for j := i; j > 0 && days[j].Before(days[j-1]); j-- {
-			days[j], days[j-1] = days[j-1], days[j]
-		}
-	}
+	return storage.CalcStreak(days, now)
 }
 
 func percent(part, total int) int {

@@ -40,11 +40,12 @@ type courseSummary struct {
 }
 
 type dashboardResponse struct {
-	Snapshot progress.Snapshot    `json:"snapshot"`
-	Recent   []storage.RecentItem `json:"recent"`
-	Continue *continueCard        `json:"continue_lesson"`
-	Course   courseSummary        `json:"course"`
-	Totals   progress.Totals      `json:"totals"`
+	Snapshot     progress.Snapshot     `json:"snapshot"`
+	Recent       []storage.RecentItem  `json:"recent"`
+	Continue     *continueCard         `json:"continue_lesson"`
+	Course       courseSummary         `json:"course"`
+	Totals       progress.Totals       `json:"totals"`
+	Achievements []storage.Achievement `json:"achievements"`
 }
 
 func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
@@ -83,6 +84,20 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 			Percent:      snapshot.CourseDone,
 		},
 		Totals: totals,
+	}
+	// Последние открытые достижения — для блока на главной странице.
+	if extras, err := s.achievementExtras(r); err == nil {
+		if _, stats, err := s.achievements.List(ctx, extras); err == nil {
+			response.Snapshot.Insights.Achievements = progress.AchieveIn{
+				Unlocked: stats.Unlocked,
+				Total:    stats.Total,
+			}
+		}
+	}
+	if recentAchievements, err := s.achievements.Recent(ctx, 4); err == nil {
+		response.Achievements = recentAchievements
+	} else {
+		response.Achievements = []storage.Achievement{}
 	}
 	writeJSON(w, http.StatusOK, response)
 }

@@ -23,6 +23,7 @@ export const queryKeys = {
   flashcards: () => ['flashcards'] as const,
   flashcardQueue: (deck: string, limit: number) => ['flashcard-queue', deck, limit] as const,
   quizzes: () => ['quizzes'] as const,
+  achievements: () => ['achievements'] as const,
   quiz: (id: string) => ['quiz', id] as const,
 }
 
@@ -127,6 +128,14 @@ export function useLessonNotes(lessonId: string | undefined) {
     enabled: Boolean(lessonId),
     staleTime: 5_000,
     retry: false,
+  })
+}
+
+export function useAchievements() {
+  return useQuery({
+    queryKey: queryKeys.achievements(),
+    queryFn: () => api.achievements(),
+    staleTime: 15_000,
   })
 }
 
