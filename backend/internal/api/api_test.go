@@ -483,13 +483,14 @@ func TestLessonContentEndpoint(t *testing.T) {
 		}
 	}
 
-	// Урок без материала: программа знает о нём, но файла ещё нет.
+	// Другой готовый урок: материал есть у всех 104 уроков программы.
 	resp, payload = env.do(t, http.MethodGet, "/api/lessons/m03-01/content", nil)
-	if resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("статус для урока без материала = %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("статус для урока из модуля 3 = %d", resp.StatusCode)
 	}
-	if decode(t, payload)["error"].(map[string]any)["code"] != "content_not_ready" {
-		t.Errorf("ожидался код content_not_ready: %s", payload)
+	detail := decode(t, payload)["lesson"].(map[string]any)
+	if detail["title"] != "Объявление функций" {
+		t.Errorf("название урока = %v", detail["title"])
 	}
 
 	resp, _ = env.do(t, http.MethodGet, "/api/lessons/nope/content", nil)
@@ -548,21 +549,25 @@ func TestLessonCompletion(t *testing.T) {
 		t.Errorf("завершённых уроков = %v", lessons["completed"])
 	}
 
-	// Урок без материала завершить нельзя.
+	// Уроки остальных модулей тоже доступны и завершаются.
 	resp, _ = env.do(t, http.MethodPost, "/api/lessons/m03-01/completed", nil)
-	if resp.StatusCode != http.StatusConflict {
-		t.Errorf("статус для урока без материала = %d, ожидался 409", resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("статус завершения урока из модуля 3 = %d", resp.StatusCode)
 	}
 }
 
-func TestCourseHasFifteenReadyLessons(t *testing.T) {
+func TestCourseHasAllLessonsReady(t *testing.T) {
 	env := newTestEnv(t)
 	_, payload := env.do(t, http.MethodGet, "/api/course", nil)
 	body := decode(t, payload)
 	course := body["course"].(map[string]any)
 	ready := int(course["ready_count"].(float64))
-	if ready < 15 {
-		t.Errorf("готовых уроков = %d, ожидалось не меньше 15", ready)
+	total := int(course["lesson_count"].(float64))
+	if ready != total {
+		t.Errorf("готовых уроков = %d, а в программе %d", ready, total)
+	}
+	if total < 104 {
+		t.Errorf("уроков в программе = %d, ожидалось 104", total)
 	}
 	extras := body["extras"].(map[string]any)
 	if extras["exercises"] != float64(30) {

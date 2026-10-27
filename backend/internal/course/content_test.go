@@ -89,8 +89,8 @@ func TestAllRepoLessonsAreValid(t *testing.T) {
 	if catalog.ReadyCount == 0 {
 		t.Fatal("в content/lessons нет ни одного урока")
 	}
-	if catalog.ReadyCount < 15 {
-		t.Errorf("готовых уроков = %d, ожидалось не меньше 15", catalog.ReadyCount)
+	if catalog.ReadyCount != len(allLessons(catalog)) {
+		t.Errorf("готовых уроков = %d, а в программе %d", catalog.ReadyCount, len(allLessons(catalog)))
 	}
 
 	for _, module := range catalog.Modules {
@@ -260,5 +260,106 @@ func TestRepoLessonStartersCompile(t *testing.T) {
 				t.Errorf("%s: стартовый код не компилируется (%s)%s", lesson.ID, result.Status, details)
 			}
 		}
+	}
+}
+
+// allLessons возвращает идентификаторы всех уроков программы.
+func allLessons(catalog *Catalog) []string {
+	ids := make([]string, 0, 128)
+	for _, module := range catalog.Modules {
+		for _, lesson := range module.Lessons {
+			ids = append(ids, lesson.ID)
+		}
+	}
+	return ids
+}
+
+// goExamples вытаскивает все ```go блоки урока.
+func goExamples(markdown string) []string {
+	var blocks []string
+	parts := strings.Split(markdown, "```go\n")
+	for _, part := range parts[1:] {
+		end := strings.Index(part, "```")
+		if end < 0 {
+			continue
+		}
+		code := strings.TrimSpace(part[:end])
+		if code != "" {
+			blocks = append(blocks, code+"\n")
+		}
+	}
+	return blocks
+}
+
+// importsExternal сообщает, есть ли в блоке импорт не из стандартной библиотеки.
+func importsExternal(code string) bool {
+	for _, line := range strings.Split(code, "\n") {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(line, "\"") {
+			continue
+		}
+		path := strings.Trim(strings.TrimSuffix(line, "\""), "\"")
+		first := path
+		if index := strings.Index(path, "/"); index >= 0 {
+			first = path[:index]
+		}
+		if strings.Contains(first, ".") {
+			return true
+		}
+	}
+	return false
+}
+
+// TestRepoLessonExamplesCompile компилирует каждый полный Go-пример из уроков.
+//
+// Фрагменты без `package` не проверяются: они иллюстрируют синтаксис и не
+// являются самостоятельной программой. Примеры, импортирующие сторонние
+// модули, пропускаются — иначе тесту понадобилась бы сеть.
+func TestRepoLessonExamplesCompile(t *testing.T) {
+	if _, err := exec.LookPath("go"); err != nil {
+		t.Skip("go не найден в PATH: проверка примеров пропущена")
+	}
+	store := NewStore(filepath.Join("..", "..", "..", "content"))
+	catalog, err := store.Load()
+	if err != nil {
+		t.Fatalf("загрузить программу: %v", err)
+	}
+
+	compiler := runner.New(runner.Config{
+		Timeout: 20 * time.Second,
+		MaxCode: 256 << 10,
+	})
+
+	checked := 0
+	for _, module := range catalog.Modules {
+		for _, lesson := range module.Lessons {
+			if !lesson.Available {
+				continue
+			}
+			content, err := store.Content(lesson.ID)
+			if err != nil {
+				t.Fatalf("%s: %v", lesson.ID, err)
+			}
+			for index, code := range goExamples(content.Markdown) {
+				if !strings.HasPrefix(code, "package ") || importsExternal(code) {
+					continue
+				}
+				checked++
+				result, err := compiler.Build(context.Background(), code)
+				if err != nil {
+					t.Fatalf("%s (пример %d): %v", lesson.ID, index+1, err)
+				}
+				if result.Status != runner.StatusOK {
+					details := ""
+					for _, diagnostic := range result.Diagnostics {
+						details += fmt.Sprintf("\n  строка %d: %s", diagnostic.Line, diagnostic.Message)
+					}
+					t.Errorf("%s: пример %d не компилируется (%s)%s", lesson.ID, index+1, result.Status, details)
+				}
+			}
+		}
+	}
+	if checked < 200 {
+		t.Errorf("проверено примеров = %d, ожидалось не меньше 200", checked)
 	}
 }
