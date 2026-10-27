@@ -91,6 +91,9 @@ func TestRepositoryExercisesAreSolvable(t *testing.T) {
 		MaxOutput:   32 << 10,
 		MaxCode:     64 << 10,
 		Concurrency: 1,
+		// Подтесты идут параллельно, а слот один: на загруженной машине очередь
+		// из девяноста сборок не укладывается в стандартные 20 секунд.
+		QueueTimeout: 5 * time.Minute,
 	})
 
 	for _, exercise := range catalog.Exercises {

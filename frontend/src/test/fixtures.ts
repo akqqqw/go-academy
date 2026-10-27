@@ -5,6 +5,9 @@ import type {
   DashboardResponse,
   LessonContentResponse,
   Meta,
+  Note,
+  NoteFolder,
+  NotesResponse,
   ProgressResponse,
   Settings,
 } from '@/types'
@@ -477,4 +480,80 @@ export const exerciseSolutionFixture = {
   id: 'sum-two',
   solution: 'package main\n\nfunc Sum(a, b int) int {\n\treturn a + b\n}\n',
   note: 'Сравните со своим решением.',
+}
+
+const baseNote: Note = {
+  id: 'n-1',
+  title: 'Слайсы и массивы',
+  body: '# Слайсы и массивы\n\nСлайс — это структура из указателя, длины и ёмкости.\n\n```go\nvar s []int\n```',
+  folder: 'Уроки',
+  lesson_id: 'm01-01',
+  pinned: true,
+  tags: ['go', 'слайсы'],
+  created_at: '2026-10-20T10:00:00Z',
+  updated_at: '2026-10-21T12:30:00Z',
+  words: 14,
+  excerpt: 'Слайс — это структура из указателя, длины и ёмкости.',
+}
+
+export const noteFixture: Note = baseNote
+
+export const secondNoteFixture: Note = {
+  id: 'n-2',
+  title: 'Шпаргалка по каналам',
+  body: '# Шпаргалка по каналам\n\nБуферизованный канал не блокирует отправителя, пока есть место.',
+  folder: 'Общее',
+  pinned: false,
+  tags: ['конкурентность'],
+  created_at: '2026-10-19T09:00:00Z',
+  updated_at: '2026-10-19T09:00:00Z',
+  words: 11,
+  excerpt: 'Буферизованный канал не блокирует отправителя, пока есть место.',
+}
+
+export const noteFoldersFixture: NoteFolder[] = [
+  { id: 'general', name: 'Общее', position: 0, count: 1 },
+  { id: 'lessons', name: 'Уроки', position: 1, count: 1 },
+  { id: 'cheats', name: 'Шпаргалки', position: 2, count: 0 },
+]
+
+export const notesFixture: NotesResponse = {
+  notes: [baseNote, secondNoteFixture],
+  folders: noteFoldersFixture,
+  tags: [
+    { tag: 'go', count: 1 },
+    { tag: 'конкурентность', count: 1 },
+    { tag: 'слайсы', count: 1 },
+  ],
+  stats: {
+    total: 2,
+    words: 25,
+    tags: 3,
+    folders: 3,
+    linked: 1,
+    pinned: 1,
+    this_week: 1,
+    with_lesson: 1,
+  },
+  filtered: 2,
+}
+
+export const lessonNotesFixture: NotesResponse = {
+  ...notesFixture,
+  notes: [baseNote],
+  filtered: 1,
+}
+
+export const noteDetailFixture = { note: baseNote }
+
+export const noteCreatedFixture = {
+  note: {
+    ...secondNoteFixture,
+    id: 'n-3',
+    title: 'Новая заметка',
+    body: '',
+    tags: [],
+    folder: 'Общее',
+    lesson_id: undefined,
+  } satisfies Note,
 }

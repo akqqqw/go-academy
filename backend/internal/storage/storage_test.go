@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"goacademy/internal/database"
@@ -267,5 +268,233 @@ func TestExerciseProgressRecordsAttempts(t *testing.T) {
 	}
 	if attempts[0].CreatedAt == "" || attempts[1].Code == "" {
 		t.Errorf("попытка не сохранила код или время: %+v", attempts[1])
+	}
+}
+
+func TestNotesCRUDAndTags(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+	notes := NewNotes(db)
+
+	created, err := notes.Create(ctx, NoteInput{
+		Body: "## Срезы\n\nСрез — это окно в массив.\n\n`append` расширяет срез.",
+		Tags: []string{"Срезы", "срезы", "#память", "плохой тег!", ""},
+	})
+	if err != nil {
+		t.Fatalf("создать заметку: %v", err)
+	}
+	if created.Title != "Срезы" {
+		t.Errorf("заголовок из первой строки = %q", created.Title)
+	}
+	if created.Folder != DefaultFolder {
+		t.Errorf("папка по умолчанию = %q", created.Folder)
+	}
+	if len(created.Tags) != 2 || created.Tags[0] != "память" || created.Tags[1] != "срезы" {
+		t.Errorf("теги = %#v, ожидались [память срезы]", created.Tags)
+	}
+	if created.Words == 0 || created.Excerpt == "" {
+		t.Errorf("не посчитаны слова или выдержка: %+v", created)
+	}
+	if created.ID == "" {
+		t.Fatal("нет идентификатора")
+	}
+
+	// Обновление меняет папку, теги и признак закрепления.
+	updated, err := notes.Update(ctx, created.ID, NoteInput{
+		Title:  "Срезы и массивы",
+		Body:   "Срез — окно в массив.",
+		Folder: "Уроки",
+		Pinned: true,
+		Tags:   []string{"срезы"},
+	})
+	if err != nil {
+		t.Fatalf("обновить заметку: %v", err)
+	}
+	if updated.Title != "Срезы и массивы" || updated.Folder != "Уроки" || !updated.Pinned {
+		t.Errorf("заметка после обновления: %+v", updated)
+	}
+	if len(updated.Tags) != 1 {
+		t.Errorf("теги после обновления = %#v", updated.Tags)
+	}
+
+	// Папка «Уроки» была заведена миграцией, поэтому её счётчик вырос.
+	folders, err := notes.Folders(ctx)
+	if err != nil {
+		t.Fatalf("папки: %v", err)
+	}
+	if len(folders) != 2 {
+		t.Fatalf("папок = %d, ожидалось 2: %+v", len(folders), folders)
+	}
+	if folders[1].Name != "Уроки" || folders[1].Count != 1 {
+		t.Errorf("папка «Уроки» = %+v", folders[1])
+	}
+
+	if err := notes.Delete(ctx, created.ID); err != nil {
+		t.Fatalf("удалить заметку: %v", err)
+	}
+	if _, err := notes.Get(ctx, created.ID); !errors.Is(err, ErrNoteNotFound) {
+		t.Errorf("после удаления ошибка = %v, ожидалась ErrNoteNotFound", err)
+	}
+}
+
+func TestNotesFiltersAndSearch(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+	notes := NewNotes(db)
+
+	first, err := notes.Create(ctx, NoteInput{
+		Title:  "Горутины",
+		Body:   "Запуск через go f().",
+		Folder: "Общее",
+		Tags:   []string{"конкурентность"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := notes.Create(ctx, NoteInput{
+		Title:    "Каналы",
+		Body:     "Канал передаёт значения между горутинами.",
+		Folder:   "Уроки",
+		LessonID: "m11-02",
+		Tags:     []string{"конкурентность", "каналы"},
+		Pinned:   true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := notes.Create(ctx, NoteInput{Title: "Интерфейсы", Body: "Неявная реализация."}); err != nil {
+		t.Fatal(err)
+	}
+
+	all, err := notes.List(ctx, NoteFilter{})
+	if err != nil {
+		t.Fatalf("список: %v", err)
+	}
+	if len(all) != 3 {
+		t.Fatalf("заметок = %d, ожидалось 3", len(all))
+	}
+	if !all[0].Pinned || all[0].ID != second.ID {
+		t.Errorf("закреплённая заметка должна быть первой: %+v", all[0])
+	}
+
+	byFolder, _ := notes.List(ctx, NoteFilter{Folder: "Уроки"})
+	if len(byFolder) != 1 || byFolder[0].ID != second.ID {
+		t.Errorf("фильтр по папке = %d заметок", len(byFolder))
+	}
+	byTag, _ := notes.List(ctx, NoteFilter{Tag: "конкурентность"})
+	if len(byTag) != 2 {
+		t.Errorf("фильтр по тегу = %d заметок, ожидалось 2", len(byTag))
+	}
+	byLesson, _ := notes.List(ctx, NoteFilter{LessonID: "m11-02"})
+	if len(byLesson) != 1 || byLesson[0].ID != second.ID {
+		t.Errorf("фильтр по уроку = %+v", byLesson)
+	}
+	byQuery, _ := notes.List(ctx, NoteFilter{Query: "ГОРУТИН"})
+	if len(byQuery) != 2 {
+		t.Errorf("поиск по тексту = %d заметок, ожидалось 2", len(byQuery))
+	}
+	pinned, _ := notes.List(ctx, NoteFilter{Pinned: true})
+	if len(pinned) != 1 {
+		t.Errorf("закреплённых = %d", len(pinned))
+	}
+
+	tags, err := notes.Tags(ctx)
+	if err != nil {
+		t.Fatalf("теги: %v", err)
+	}
+	if len(tags) != 2 || tags[0].Tag != "конкурентность" || tags[0].Count != 2 {
+		t.Errorf("теги = %+v", tags)
+	}
+
+	stats, err := notes.Stats(ctx)
+	if err != nil {
+		t.Fatalf("статистика: %v", err)
+	}
+	if stats.Total != 3 || stats.Pinned != 1 || stats.Linked != 1 || stats.Tags != 2 {
+		t.Errorf("статистика = %+v", stats)
+	}
+	if first.Words == 0 || stats.Words == 0 {
+		t.Errorf("слова не считаются: %+v", stats)
+	}
+	// Свежесозданные заметки попадают в счётчик «за неделю».
+	if stats.ThisWeek != 3 {
+		t.Errorf("this_week = %d, ожидалось 3", stats.ThisWeek)
+	}
+	if stats.WithLesson != stats.Linked {
+		t.Errorf("with_lesson = %d, linked = %d", stats.WithLesson, stats.Linked)
+	}
+}
+
+func TestNotesValidationAndFolders(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+	notes := NewNotes(db)
+
+	if _, err := notes.Create(ctx, NoteInput{}); !errors.Is(err, ErrNoteInvalid) {
+		t.Errorf("пустая заметка: ошибка = %v", err)
+	}
+	if _, err := notes.Create(ctx, NoteInput{Title: strings.Repeat("я", MaxNoteTitle+20)}); err != nil {
+		t.Fatalf("длинный заголовок должен обрезаться: %v", err)
+	}
+
+	folder, err := notes.CreateFolder(ctx, "Шпаргалки")
+	if err != nil {
+		t.Fatalf("создать папку: %v", err)
+	}
+	if _, err := notes.CreateFolder(ctx, "Шпаргалки"); !errors.Is(err, ErrFolderExists) {
+		t.Errorf("дубликат папки: ошибка = %v", err)
+	}
+
+	note, err := notes.Create(ctx, NoteInput{Title: "Памятка", Body: "текст", Folder: "Шпаргалки"})
+	if err != nil {
+		t.Fatalf("заметка в новую папку: %v", err)
+	}
+	if note.Folder != "Шпаргалки" {
+		t.Errorf("папка заметки = %q", note.Folder)
+	}
+
+	if _, err := notes.RenameFolder(ctx, folder.ID, "Шпаргалки Go"); err != nil {
+		t.Fatalf("переименовать папку: %v", err)
+	}
+	renamed, err := notes.Get(ctx, note.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if renamed.Folder != "Шпаргалки Go" {
+		t.Errorf("заметка не переехала: %q", renamed.Folder)
+	}
+
+	// Папку «Общее» удалять нельзя, остальные — можно, заметки переезжают.
+	folders, _ := notes.Folders(ctx)
+	var generalID string
+	for _, item := range folders {
+		if item.Name == DefaultFolder {
+			generalID = item.ID
+		}
+	}
+	if err := notes.DeleteFolder(ctx, generalID); !errors.Is(err, ErrNoteInvalid) {
+		t.Errorf("удаление «Общее»: ошибка = %v", err)
+	}
+	if err := notes.DeleteFolder(ctx, folder.ID); err != nil {
+		t.Fatalf("удалить папку: %v", err)
+	}
+	moved, _ := notes.Get(ctx, note.ID)
+	if moved.Folder != DefaultFolder {
+		t.Errorf("заметка не переехала в «Общее»: %q", moved.Folder)
+	}
+
+	// Заметка с новой папкой создаёт её автоматически.
+	if _, err := notes.Create(ctx, NoteInput{Title: "Новая", Body: "текст", Folder: "Идеи"}); err != nil {
+		t.Fatalf("создать заметку с новой папкой: %v", err)
+	}
+	folders, _ = notes.Folders(ctx)
+	found := false
+	for _, item := range folders {
+		if item.Name == "Идеи" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("папка «Идеи» не создалась автоматически")
 	}
 }

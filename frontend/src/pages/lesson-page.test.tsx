@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { Route, Routes } from 'react-router-dom'
@@ -10,6 +10,8 @@ import {
   draftFixture,
   lessonCompletedFixture,
   lessonContentFixture,
+  lessonNotesFixture,
+  noteCreatedFixture,
   runResultFixture,
   runnerStatusFixture,
 } from '@/test/fixtures'
@@ -26,6 +28,8 @@ function lessonRoutes(extra: Record<string, unknown> = {}) {
     '/api/lessons/m01-01/opened': { lesson: { id: 'm01-01', status: 'in_progress' } },
     '/api/lessons/m01-01/completed': lessonCompletedFixture,
     '/api/editor/run': runResultFixture,
+    '/api/notes': (init?: RequestInit) =>
+      init?.method === 'POST' ? noteCreatedFixture : lessonNotesFixture,
     ...extra,
   }
 }
@@ -92,6 +96,31 @@ describe('LessonPage', () => {
           String(url).includes('/api/lessons/m01-01/completed') && init?.method === 'POST',
       )
       expect(call).toBeTruthy()
+    })
+  })
+
+  it('показывает заметки к уроку и создаёт новую из панели', async () => {
+    const user = userEvent.setup()
+    const fetchMock = mockFetch(lessonRoutes())
+    renderLesson()
+
+    expect(await screen.findByText('Заметки к уроку')).toBeInTheDocument()
+    expect(await screen.findByText('Слайсы и массивы')).toBeInTheDocument()
+    // Ссылка на заметку ведёт в раздел «Заметки» по её идентификатору.
+    expect(screen.getByRole('link', { name: /Слайсы и массивы/ })).toHaveAttribute('href', '/notes/n-1')
+
+    await user.click(screen.getByRole('button', { name: 'Добавить заметку' }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(screen.getByLabelText('Текст заметки к уроку'), 'Ключевое слово defer')
+    await user.click(within(dialog).getByRole('button', { name: /Сохранить заметку/ }))
+
+    await waitFor(() => {
+      const post = fetchMock.mock.calls.find(([url, init]) => {
+        return String(url).includes('/api/notes') && init?.method === 'POST'
+      })
+      expect(post).toBeTruthy()
+      expect(String(post?.[1]?.body)).toContain('Ключевое слово defer')
+      expect(String(post?.[1]?.body)).toContain('m01-01')
     })
   })
 

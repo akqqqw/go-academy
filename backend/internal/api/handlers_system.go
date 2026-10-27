@@ -12,10 +12,10 @@ import (
 
 // Stage описывает текущий этап разработки приложения. Значение выводится в
 // разделе «Настройки», чтобы было понятно, какие разделы уже работают.
-const Stage = 4
+const Stage = 5
 
 // StageLabel — человекочитаемое название этапа.
-const StageLabel = "Этап 4 — практика с проверкой через go test"
+const StageLabel = "Этап 5 — заметки: Markdown, папки, теги, связь с уроками"
 
 type appInfo struct {
 	Name       string `json:"name"`

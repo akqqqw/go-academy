@@ -13,8 +13,14 @@ import type {
   FormatResponse,
   LessonCompletionResponse,
   LessonContentResponse,
+  FoldersResponse,
   LessonProgressRecord,
   Meta,
+  NoteFolder,
+  NoteInput,
+  NoteResponse,
+  NotesResponse,
+  TagsResponse,
   ProgressResponse,
   RunResult,
   RunnerStatusResponse,
@@ -180,6 +186,55 @@ export const api = {
     request<{ status: string; lessons: number; exercises: number }>('/api/content/reload', {
       method: 'POST',
     }),
+
+  /** Заметки: фильтры по папке, тегу, уроку и тексту. */
+  notes: (filters?: { folder?: string; tag?: string; lesson?: string; q?: string; pinned?: boolean }) => {
+    const params = new URLSearchParams()
+    if (filters?.folder) params.set('folder', filters.folder)
+    if (filters?.tag) params.set('tag', filters.tag)
+    if (filters?.lesson) params.set('lesson', filters.lesson)
+    if (filters?.q) params.set('q', filters.q)
+    if (filters?.pinned) params.set('pinned', '1')
+    const search = params.toString()
+    return request<NotesResponse>(`/api/notes${search ? `?${search}` : ''}`)
+  },
+
+  note: (id: string) => request<NoteResponse>(`/api/notes/${encodeURIComponent(id)}`),
+
+  createNote: (input: NoteInput) =>
+    request<NoteResponse>('/api/notes', { method: 'POST', body: JSON.stringify(input) }),
+
+  updateNote: (id: string, input: NoteInput) =>
+    request<NoteResponse>(`/api/notes/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+
+  deleteNote: (id: string) =>
+    request<{ deleted: boolean; id: string }>(`/api/notes/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+
+  noteFolders: () => request<FoldersResponse>('/api/note-folders'),
+
+  createFolder: (name: string) =>
+    request<{ folder: NoteFolder }>('/api/note-folders', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    }),
+
+  renameFolder: (id: string, name: string) =>
+    request<{ folder: NoteFolder }>(`/api/note-folders/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name }),
+    }),
+
+  deleteFolder: (id: string) =>
+    request<{ deleted: boolean; id: string }>(`/api/note-folders/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+
+  noteTags: () => request<TagsResponse>('/api/notes/tags'),
 
   /** Список заданий с фильтрами: сложность, модуль, статус и поиск. */
   exercises: (filters?: {

@@ -1028,3 +1028,171 @@ func TestSearchFindsExercises(t *testing.T) {
 		t.Fatalf("задание не найдено среди результатов: %v", results)
 	}
 }
+
+func TestNotesCRUD(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Пустой список: папки уже есть после миграции.
+	resp, payload := env.do(t, http.MethodGet, "/api/notes", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("список: статус = %d: %s", resp.StatusCode, payload)
+	}
+	body := decode(t, payload)
+	if len(body["notes"].([]any)) != 0 {
+		t.Errorf("заметок быть не должно: %v", body["notes"])
+	}
+	folders := body["folders"].([]any)
+	if len(folders) != 2 {
+		t.Fatalf("папок = %d, ожидалось 2", len(folders))
+	}
+
+	// Создание: заголовок берётся из первой строки, теги нормализуются.
+	resp, payload = env.do(t, http.MethodPost, "/api/notes", map[string]any{
+		"body":   "## Срезы\n\nСрез — окно в массив.",
+		"tags":   []string{"Срезы", "#Память", "срезы"},
+		"pinned": true,
+	})
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("создание: статус = %d: %s", resp.StatusCode, payload)
+	}
+	note := decode(t, payload)["note"].(map[string]any)
+	noteID := note["id"].(string)
+	if note["title"] != "Срезы" || note["folder"] != "Общее" || note["pinned"] != true {
+		t.Errorf("заметка = %v", note)
+	}
+	tags := note["tags"].([]any)
+	if len(tags) != 2 || tags[0] != "память" || tags[1] != "срезы" {
+		t.Errorf("теги = %v", tags)
+	}
+	if note["excerpt"] == "" || note["words"].(float64) == 0 {
+		t.Errorf("нет выдержки или счётчика слов: %v", note)
+	}
+
+	// Обновление: этим же путём работает автосохранение.
+	resp, payload = env.do(t, http.MethodPut, "/api/notes/"+noteID, map[string]any{
+		"title":     "Срезы и массивы",
+		"body":      "Срез ссылается на массив.",
+		"folder":    "Уроки",
+		"lesson_id": "m04-02",
+		"tags":      []string{"срезы"},
+	})
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("обновление: статус = %d: %s", resp.StatusCode, payload)
+	}
+	updated := decode(t, payload)["note"].(map[string]any)
+	if updated["title"] != "Срезы и массивы" || updated["folder"] != "Уроки" || updated["lesson_id"] != "m04-02" {
+		t.Errorf("заметка после обновления = %v", updated)
+	}
+
+	// Чтение, поиск и фильтр по уроку.
+	if resp, _ = env.do(t, http.MethodGet, "/api/notes/"+noteID, nil); resp.StatusCode != http.StatusOK {
+		t.Errorf("чтение заметки: статус = %d", resp.StatusCode)
+	}
+	_, payload = env.do(t, http.MethodGet, "/api/notes?q=МАССИВ", nil)
+	found := decode(t, payload)["notes"].([]any)
+	if len(found) != 1 {
+		t.Errorf("поиск по кириллице вернул %d заметок", len(found))
+	}
+	_, payload = env.do(t, http.MethodGet, "/api/notes?lesson=m04-02", nil)
+	if got := len(decode(t, payload)["notes"].([]any)); got != 1 {
+		t.Errorf("фильтр по уроку вернул %d заметок", got)
+	}
+	_, payload = env.do(t, http.MethodGet, "/api/notes?folder=Уроки", nil)
+	filtered := decode(t, payload)["notes"].([]any)
+	if len(filtered) != 1 || filtered[0].(map[string]any)["id"] != noteID {
+		t.Errorf("фильтр по папке = %v", filtered)
+	}
+
+	// Теги и статистика.
+	_, payload = env.do(t, http.MethodGet, "/api/notes/tags", nil)
+	if got := len(decode(t, payload)["tags"].([]any)); got != 1 {
+		t.Errorf("тегов = %d, ожидался 1", got)
+	}
+	_, payload = env.do(t, http.MethodGet, "/api/notes", nil)
+	stats := decode(t, payload)["stats"].(map[string]any)
+	if stats["total"].(float64) != 1 || stats["linked"].(float64) != 1 {
+		t.Errorf("статистика = %v", stats)
+	}
+
+	// Удаление и 404 после него.
+	if resp, _ = env.do(t, http.MethodDelete, "/api/notes/"+noteID, nil); resp.StatusCode != http.StatusOK {
+		t.Errorf("удаление: статус = %d", resp.StatusCode)
+	}
+	resp, _ = env.do(t, http.MethodGet, "/api/notes/"+noteID, nil)
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("после удаления статус = %d, ожидался 404", resp.StatusCode)
+	}
+	resp, _ = env.do(t, http.MethodDelete, "/api/notes/"+noteID, nil)
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("повторное удаление: статус = %d", resp.StatusCode)
+	}
+}
+
+func TestNotesValidation(t *testing.T) {
+	env := newTestEnv(t)
+
+	resp, payload := env.do(t, http.MethodPost, "/api/notes", map[string]any{"body": "   "})
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("пустая заметка: статус = %d: %s", resp.StatusCode, payload)
+	}
+	if code := decode(t, payload)["error"].(map[string]any)["code"]; code != "note_invalid" {
+		t.Errorf("код ошибки = %v", code)
+	}
+
+	resp, _ = env.do(t, http.MethodGet, "/api/notes/unknown-id", nil)
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("неизвестная заметка: статус = %d", resp.StatusCode)
+	}
+
+	// Метод не поддерживается — 405, а не 404.
+	resp, _ = env.do(t, http.MethodPost, "/api/notes/unknown-id", nil)
+	if resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Errorf("статус = %d, ожидался 405", resp.StatusCode)
+	}
+}
+
+func TestNoteFolders(t *testing.T) {
+	env := newTestEnv(t)
+
+	resp, payload := env.do(t, http.MethodPost, "/api/note-folders", map[string]any{"name": "Шпаргалки"})
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("создание папки: статус = %d: %s", resp.StatusCode, payload)
+	}
+	folder := decode(t, payload)["folder"].(map[string]any)
+	folderID := folder["id"].(string)
+
+	resp, _ = env.do(t, http.MethodPost, "/api/note-folders", map[string]any{"name": "Шпаргалки"})
+	if resp.StatusCode != http.StatusConflict {
+		t.Errorf("дубликат папки: статус = %d, ожидался 409", resp.StatusCode)
+	}
+
+	// Заметка в папку, затем переименование папки.
+	_, payload = env.do(t, http.MethodPost, "/api/notes", map[string]any{
+		"title":  "Памятка",
+		"folder": "Шпаргалки",
+	})
+	noteID := decode(t, payload)["note"].(map[string]any)["id"].(string)
+
+	resp, payload = env.do(t, http.MethodPut, "/api/note-folders/"+folderID, map[string]any{"name": "Шпаргалки Go"})
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("переименование: статус = %d: %s", resp.StatusCode, payload)
+	}
+	_, payload = env.do(t, http.MethodGet, "/api/notes/"+noteID, nil)
+	if folder := decode(t, payload)["note"].(map[string]any)["folder"]; folder != "Шпаргалки Go" {
+		t.Errorf("заметка не переехала: %v", folder)
+	}
+
+	// Удаление папки переносит заметку в «Общее».
+	if resp, _ = env.do(t, http.MethodDelete, "/api/note-folders/"+folderID, nil); resp.StatusCode != http.StatusOK {
+		t.Errorf("удаление папки: статус = %d", resp.StatusCode)
+	}
+	_, payload = env.do(t, http.MethodGet, "/api/notes/"+noteID, nil)
+	if folder := decode(t, payload)["note"].(map[string]any)["folder"]; folder != "Общее" {
+		t.Errorf("заметка не перенесена в «Общее»: %v", folder)
+	}
+
+	resp, _ = env.do(t, http.MethodDelete, "/api/note-folders/unknown", nil)
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("неизвестная папка: статус = %d", resp.StatusCode)
+	}
+}

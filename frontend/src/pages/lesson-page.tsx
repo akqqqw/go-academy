@@ -12,6 +12,7 @@ import {
   ListChecks,
   Loader2,
   MousePointerClick,
+  NotebookPen,
   Target,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -27,6 +28,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { CodeWorkbench } from '@/features/editor/code-workbench'
+import { LessonNotesPanel } from '@/features/notes/lesson-notes-panel'
 import { ApiError, api } from '@/lib/api'
 import { cn, formatMinutes, levelLabel, plural } from '@/lib/utils'
 import { useCourse, useLessonContent } from '@/services/queries'
@@ -91,7 +93,10 @@ export function LessonPage() {
   const location = useLocation()
   const openedRef = useRef<string | null>(null)
   const [completing, setCompleting] = useState(false)
+  const [selection, setSelection] = useState<{ text: string; stamp: number } | null>(null)
+  const [selectedText, setSelectedText] = useState('')
   const theoryRef = useRef<HTMLDivElement>(null)
+  const theoryBodyRef = useRef<HTMLDivElement>(null)
 
   const markdown = content.data?.markdown ?? ''
   const headings = useMemo(() => extractHeadings(markdown), [markdown])
@@ -115,6 +120,19 @@ export function LessonPage() {
         openedRef.current = null
       })
   }, [content.data, lessonId, queryClient])
+
+  // Выделение внутри теории превращается в кандидата на заметку.
+  const captureSelection = () => {
+    const selectionApi = typeof window === 'undefined' ? null : window.getSelection()
+    const text = selectionApi?.toString().replace(/\s+/g, ' ').trim() ?? ''
+    const inside = Boolean(
+      selectionApi &&
+        theoryBodyRef.current &&
+        selectionApi.anchorNode &&
+        theoryBodyRef.current.contains(selectionApi.anchorNode),
+    )
+    setSelectedText(inside && text.length >= 3 ? text : '')
+  }
 
   const complete = async () => {
     if (!lessonId) return
@@ -307,7 +325,30 @@ export function LessonPage() {
                 </nav>
               ) : null}
 
-              <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-line bg-surface px-5 py-4 shadow-card">
+              <div
+                ref={theoryBodyRef}
+                onMouseUp={captureSelection}
+                onKeyUp={captureSelection}
+                className="relative min-h-0 flex-1 overflow-y-auto rounded-xl border border-line bg-surface px-5 py-4 shadow-card"
+              >
+                {selectedText ? (
+                  <div className="sticky top-0 z-10 -mx-3 -mt-2 mb-2 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary-soft/90 px-2 py-1.5 backdrop-blur">
+                    <span className="min-w-0 flex-1 truncate text-[11.5px] text-primary">
+                      Выделено: «{selectedText.slice(0, 60)}
+                      {selectedText.length > 60 ? '…' : ''}»
+                    </span>
+                    <Button
+                      size="sm"
+                      className="h-6 px-2 text-[11.5px]"
+                      onClick={() => {
+                        setSelection({ text: selectedText, stamp: Date.now() })
+                        setSelectedText('')
+                      }}
+                    >
+                      <NotebookPen className="size-3" />В заметку
+                    </Button>
+                  </div>
+                ) : null}
                 <MarkdownViewer markdown={markdown} />
               </div>
 
@@ -360,6 +401,13 @@ export function LessonPage() {
           }
         />
       </div>
+
+      <LessonNotesPanel
+        lessonId={lesson.id}
+        lessonTitle={lesson.title}
+        selectionDraft={selection}
+        onSelectionUsed={() => setSelection(null)}
+      />
 
       <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
         <p className="flex items-center gap-1.5 text-[11px] text-fg-subtle">

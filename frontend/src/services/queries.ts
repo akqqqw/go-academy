@@ -17,6 +17,9 @@ export const queryKeys = {
   runnerStatus: ['runner-status'] as const,
   exercises: (filters: string) => ['exercises', filters] as const,
   exercise: (id: string) => ['exercise', id] as const,
+  notes: (filters: string) => ['notes', filters] as const,
+  note: (id: string) => ['note', id] as const,
+  lessonNotes: (lessonId: string) => ['lesson-notes', lessonId] as const,
 }
 
 export function useMeta() {
@@ -82,6 +85,43 @@ export function useExercise(id: string | undefined) {
     queryFn: () => api.exercise(id as string),
     enabled: Boolean(id),
     staleTime: 10_000,
+    retry: false,
+  })
+}
+
+export function useNotes(filters: {
+  folder?: string
+  tag?: string
+  lesson?: string
+  q?: string
+  pinned?: boolean
+}) {
+  const key = JSON.stringify(filters)
+  return useQuery({
+    queryKey: queryKeys.notes(key),
+    queryFn: () => api.notes(filters),
+    staleTime: 5_000,
+    placeholderData: (previous) => previous,
+  })
+}
+
+export function useNote(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.note(id ?? ''),
+    queryFn: () => api.note(id as string),
+    enabled: Boolean(id),
+    staleTime: 5_000,
+    retry: false,
+  })
+}
+
+/** Заметки, привязанные к уроку: показываются прямо на странице урока. */
+export function useLessonNotes(lessonId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.lessonNotes(lessonId ?? ''),
+    queryFn: () => api.notes({ lesson: lessonId as string }),
+    enabled: Boolean(lessonId),
+    staleTime: 5_000,
     retry: false,
   })
 }

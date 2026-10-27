@@ -29,6 +29,7 @@ type Server struct {
 	history    *storage.History
 	backups    *storage.Backups
 	drafts     *storage.Drafts
+	notes      *storage.Notes
 	exAttempts *storage.ExerciseProgress
 	stats      *progress.Service
 	course     *course.Store
@@ -57,6 +58,7 @@ func New(cfg config.Config, db *database.DB, logger *slog.Logger) *Server {
 		history:    storage.NewHistory(db),
 		backups:    storage.NewBackups(db, cfg.DataDir),
 		drafts:     storage.NewDrafts(db),
+		notes:      storage.NewNotes(db),
 		exAttempts: storage.NewExerciseProgress(db),
 		stats:      progress.New(db, activity, settings),
 		course:     course.NewStore(cfg.ContentDir),
@@ -114,6 +116,18 @@ func (s *Server) routes() http.Handler {
 	s.handle(mux, http.MethodGet, "/api/exercises/{id}", s.handleExerciseGet)
 	s.handle(mux, http.MethodPost, "/api/exercises/{id}/submit", s.handleExerciseSubmit)
 	s.handle(mux, http.MethodGet, "/api/exercises/{id}/solution", s.handleExerciseSolution)
+
+	// Заметки и папки.
+	s.handle(mux, http.MethodGet, "/api/notes", s.handleNotesList)
+	s.handle(mux, http.MethodPost, "/api/notes", s.handleNoteCreate)
+	s.handle(mux, http.MethodGet, "/api/notes/tags", s.handleNoteTags)
+	s.handle(mux, http.MethodGet, "/api/notes/{id}", s.handleNoteGet)
+	s.handle(mux, http.MethodPut, "/api/notes/{id}", s.handleNoteUpdate)
+	s.handle(mux, http.MethodDelete, "/api/notes/{id}", s.handleNoteDelete)
+	s.handle(mux, http.MethodGet, "/api/note-folders", s.handleFoldersList)
+	s.handle(mux, http.MethodPost, "/api/note-folders", s.handleFolderCreate)
+	s.handle(mux, http.MethodPut, "/api/note-folders/{id}", s.handleFolderRename)
+	s.handle(mux, http.MethodDelete, "/api/note-folders/{id}", s.handleFolderDelete)
 
 	// Программа курса и контент.
 	s.handle(mux, http.MethodGet, "/api/course", s.handleCourse)

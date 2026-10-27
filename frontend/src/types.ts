@@ -527,3 +527,71 @@ export interface ExerciseSolutionResponse {
   solution: string
   note: string
 }
+
+/** Заметка пользователя. */
+export interface Note {
+  id: string
+  title: string
+  body: string
+  folder: string
+  lesson_id?: string
+  pinned: boolean
+  tags: string[]
+  created_at: string
+  updated_at: string
+  words: number
+  excerpt: string
+}
+
+export interface NoteFolder {
+  id: string
+  name: string
+  position: number
+  count: number
+}
+
+export interface NoteTag {
+  tag: string
+  count: number
+}
+
+export interface NotesStats {
+  total: number
+  words: number
+  tags: number
+  folders: number
+  linked: number
+  pinned: number
+  this_week: number
+  with_lesson: number
+}
+
+export interface NotesResponse {
+  notes: Note[]
+  folders: NoteFolder[]
+  tags: NoteTag[]
+  stats: NotesStats
+  filtered: number
+}
+
+export interface NoteResponse {
+  note: Note
+}
+
+export interface FoldersResponse {
+  folders: NoteFolder[]
+}
+
+export interface TagsResponse {
+  tags: NoteTag[]
+}
+
+/** Данные для создания или обновления заметки. */
+export interface NoteInput {
+  title?: string
+  body: string
+  folder?: string
+  lesson_id?: string
+  pinned?: boolean
+  tags?: string[]
+}

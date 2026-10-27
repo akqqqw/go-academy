@@ -107,6 +107,7 @@ export default function App() {
                 }
               />
               <Route path="notes" element={<NotesPage />} />
+              <Route path="notes/:noteId" element={<NotesPage />} />
               <Route path="flashcards" element={<FlashcardsPage />} />
               <Route path="quizzes" element={<QuizzesPage />} />
               <Route path="progress" element={<ProgressPage />} />
