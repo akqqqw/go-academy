@@ -595,3 +595,91 @@ export interface NoteInput {
   pinned?: boolean
   tags?: string[]
 }
+
+/** Оценка повторения карточки. */
+export type CardGrade = 'again' | 'hard' | 'good' | 'easy'
+
+/** Карточка вместе с прогрессом повторений (SM-2). */
+export interface Flashcard {
+  id: string
+  deck_id: string
+  front: string
+  back: string
+  hint?: string
+  ease: number
+  interval_days: number
+  repetitions: number
+  lapses: number
+  due_at: string
+  custom: boolean
+  reviews: number
+  last_review?: string
+  new: boolean
+  learning: boolean
+}
+
+/** Колода карточек с прогрессом. */
+export interface FlashcardDeck {
+  id: string
+  title: string
+  description: string
+  level: string
+  icon: string
+  module: number
+  total: number
+  due: number
+  new: number
+  learned: number
+  custom: number
+  progress: number
+}
+
+export interface CardDay {
+  date: string
+  count: number
+}
+
+export interface FlashcardStats {
+  total: number
+  due: number
+  new: number
+  learned: number
+  reviews: number
+  reviews_today: number
+  accuracy: number
+  streak: number
+  days: CardDay[]
+}
+
+export interface FlashcardsOverview {
+  decks: FlashcardDeck[]
+  stats: FlashcardStats
+  source: string
+}
+
+export interface FlashcardQueue {
+  cards: Flashcard[]
+  remaining: number
+  limit: number
+  deck?: {
+    id: string
+    title: string
+    description: string
+    level: string
+    icon: string
+    module: number
+  }
+}
+
+export interface ReviewResult {
+  card: Flashcard
+  stats: FlashcardStats
+  due: number
+}
+
+export interface FlashcardInput {
+  deck_id: string
+  front: string
+  back: string
+  hint?: string
+}

@@ -12,10 +12,10 @@ import (
 
 // Stage описывает текущий этап разработки приложения. Значение выводится в
 // разделе «Настройки», чтобы было понятно, какие разделы уже работают.
-const Stage = 5
+const Stage = 6
 
 // StageLabel — человекочитаемое название этапа.
-const StageLabel = "Этап 5 — заметки: Markdown, папки, теги, связь с уроками"
+const StageLabel = "Этап 6 — карточки: 12 колод, интервальное повторение SM-2"
 
 type appInfo struct {
 	Name       string `json:"name"`
@@ -188,12 +188,25 @@ func (s *Server) handleReloadContent(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "exercise_catalog_invalid", err.Error())
 		return
 	}
+	// Колоды карточек тоже живут в content/: после перечитывания прогресс
+	// существующих карточек сохраняется, новые добавляются.
+	if err := s.cardDecks.Reload(); err != nil {
+		writeError(w, http.StatusInternalServerError, "deck_catalog_invalid", err.Error())
+		return
+	}
+	synced, err := s.flashcards.Sync(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "flashcards_sync_failed", err.Error())
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":    "reloaded",
-		"modules":   len(catalog.Modules),
-		"lessons":   catalog.LessonCount,
-		"ready":     catalog.ReadyCount,
-		"exercises": len(exercises.Exercises),
+		"status":     "reloaded",
+		"modules":    len(catalog.Modules),
+		"lessons":    catalog.LessonCount,
+		"ready":      catalog.ReadyCount,
+		"exercises":  len(exercises.Exercises),
+		"decks":      len(s.cardDecks.Decks()),
+		"flashcards": synced,
 	})
 }
 

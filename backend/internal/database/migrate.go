@@ -19,6 +19,9 @@ var schemaV3 string
 //go:embed schema_v4.sql
 var schemaV4 string
 
+//go:embed schema_v5.sql
+var schemaV5 string
+
 type migration struct {
 	version int
 	name    string
@@ -32,6 +35,7 @@ var migrations = []migration{
 	{version: 2, name: "code_drafts", sql: schemaV2},
 	{version: 3, name: "exercise_attempts", sql: schemaV3},
 	{version: 4, name: "note_folders", sql: schemaV4},
+	{version: 5, name: "flashcard_hints", sql: schemaV5},
 }
 
 func (d *DB) migrate(ctx context.Context) error {

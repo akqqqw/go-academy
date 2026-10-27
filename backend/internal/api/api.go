@@ -2,12 +2,14 @@
 package api
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
 
+	"goacademy/internal/cards"
 	"goacademy/internal/config"
 	"goacademy/internal/course"
 	"goacademy/internal/database"
@@ -30,9 +32,11 @@ type Server struct {
 	backups    *storage.Backups
 	drafts     *storage.Drafts
 	notes      *storage.Notes
+	flashcards *storage.Flashcards
 	exAttempts *storage.ExerciseProgress
 	stats      *progress.Service
 	course     *course.Store
+	cardDecks  *cards.Store
 	exercises  *practice.Store
 	runner     *runner.Runner
 	static     *static.Handler
@@ -75,6 +79,15 @@ func New(cfg config.Config, db *database.DB, logger *slog.Logger) *Server {
 		routeMethods: map[string][]string{},
 	}
 	s.exercises = practice.NewStore(cfg.ContentDir, s.course)
+	// Колоды карточек читаются из контента, прогресс повторений — в SQLite.
+	s.cardDecks = cards.NewStore(cfg.ContentDir)
+	if err := s.cardDecks.Reload(); err != nil {
+		s.log.Warn("колоды карточек не загружены", "error", err)
+	}
+	s.flashcards = storage.NewFlashcards(db, s.cardDecks)
+	if _, err := s.flashcards.Sync(context.Background()); err != nil {
+		s.log.Warn("карточки не синхронизированы с базой", "error", err)
+	}
 	s.handler = s.routes()
 	return s
 }
@@ -128,6 +141,16 @@ func (s *Server) routes() http.Handler {
 	s.handle(mux, http.MethodPost, "/api/note-folders", s.handleFolderCreate)
 	s.handle(mux, http.MethodPut, "/api/note-folders/{id}", s.handleFolderRename)
 	s.handle(mux, http.MethodDelete, "/api/note-folders/{id}", s.handleFolderDelete)
+
+	// Карточки: SM-2, повторения и свои карточки.
+	s.handle(mux, http.MethodGet, "/api/flashcards", s.handleFlashcardsOverview)
+	s.handle(mux, http.MethodPost, "/api/flashcards", s.handleFlashcardCreate)
+	s.handle(mux, http.MethodGet, "/api/flashcards/queue", s.handleFlashcardsQueue)
+	s.handle(mux, http.MethodGet, "/api/flashcards/stats", s.handleFlashcardsStats)
+	s.handle(mux, http.MethodGet, "/api/flashcards/{id}", s.handleFlashcardGet)
+	s.handle(mux, http.MethodDelete, "/api/flashcards/{id}", s.handleFlashcardDelete)
+	s.handle(mux, http.MethodPost, "/api/flashcards/{id}/review", s.handleFlashcardReview)
+	s.handle(mux, http.MethodPost, "/api/flashcards/decks/{id}/reset", s.handleDeckReset)
 
 	// Программа курса и контент.
 	s.handle(mux, http.MethodGet, "/api/course", s.handleCourse)

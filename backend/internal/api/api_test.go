@@ -1196,3 +1196,152 @@ func TestNoteFolders(t *testing.T) {
 		t.Errorf("неизвестная папка: статус = %d", resp.StatusCode)
 	}
 }
+
+func TestFlashcardsOverviewAndReview(t *testing.T) {
+	env := newTestEnv(t)
+
+	// 12 колод и 100 карточек из контента синхронизируются при старте.
+	resp, payload := env.do(t, http.MethodGet, "/api/flashcards", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("обзор: статус = %d: %s", resp.StatusCode, payload)
+	}
+	body := decode(t, payload)
+	decks := body["decks"].([]any)
+	if len(decks) != 12 {
+		t.Fatalf("колод = %d, ожидалось 12", len(decks))
+	}
+	stats := body["stats"].(map[string]any)
+	if stats["total"].(float64) != 100 {
+		t.Errorf("карточек = %v, ожидалось 100", stats["total"])
+	}
+	first := decks[0].(map[string]any)
+	if first["total"].(float64) == 0 || first["due"] == nil || first["title"] == "" {
+		t.Errorf("колода = %v", first)
+	}
+
+	// Очередь по конкретной колоде.
+	resp, payload = env.do(t, http.MethodGet, "/api/flashcards/queue?deck=basics&limit=5", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("очередь: статус = %d: %s", resp.StatusCode, payload)
+	}
+	queue := decode(t, payload)
+	cards := queue["cards"].([]any)
+	if len(cards) != 5 {
+		t.Fatalf("в очереди %d карточек, ожидалось 5", len(cards))
+	}
+	deck := queue["deck"].(map[string]any)
+	if deck["id"] != "basics" || deck["title"] == "" {
+		t.Errorf("колода в ответе = %v", deck)
+	}
+	card := cards[0].(map[string]any)
+	cardID := card["id"].(string)
+	if card["front"] == "" || card["back"] == "" || card["hint"] == "" {
+		t.Errorf("карточка = %v", card)
+	}
+
+	// Оценка «хорошо»: интервал растёт, карточка уходит из очереди.
+	resp, payload = env.do(t, http.MethodPost, "/api/flashcards/"+cardID+"/review",
+		map[string]any{"grade": "good"})
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("повторение: статус = %d: %s", resp.StatusCode, payload)
+	}
+	reviewed := decode(t, payload)
+	updated := reviewed["card"].(map[string]any)
+	if updated["interval_days"].(float64) != 1 || updated["new"].(bool) {
+		t.Errorf("карточка после повтора = %v", updated)
+	}
+	if reviewed["stats"].(map[string]any)["reviews_today"].(float64) != 1 {
+		t.Errorf("повторений сегодня = %v", reviewed["stats"])
+	}
+
+	// Неверная оценка — 400, неизвестная карточка — 404, неизвестная колода — 404.
+	if resp, _ := env.do(t, http.MethodPost, "/api/flashcards/"+cardID+"/review",
+		map[string]any{"grade": "maybe"}); resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("неверная оценка: статус = %d", resp.StatusCode)
+	}
+	if resp, _ := env.do(t, http.MethodGet, "/api/flashcards/nope", nil); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("неизвестная карточка: статус = %d", resp.StatusCode)
+	}
+	if resp, _ := env.do(t, http.MethodGet, "/api/flashcards/queue?deck=nope", nil); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("неизвестная колода: статус = %d", resp.StatusCode)
+	}
+	// limit ограничивается допустимым диапазоном, а не ломает запрос.
+	if resp, payload := env.do(t, http.MethodGet, "/api/flashcards/queue?limit=0", nil); resp.StatusCode != http.StatusOK {
+		t.Errorf("limit=0: статус = %d", resp.StatusCode)
+	} else if decode(t, payload)["limit"].(float64) != 1 {
+		t.Errorf("limit=0 должен подняться до 1: %s", payload)
+	}
+	if resp, _ := env.do(t, http.MethodGet, "/api/flashcards/queue?limit=abc", nil); resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("limit=abc: статус = %d", resp.StatusCode)
+	}
+}
+
+func TestFlashcardCustomAndReset(t *testing.T) {
+	env := newTestEnv(t)
+
+	resp, payload := env.do(t, http.MethodPost, "/api/flashcards", map[string]any{
+		"deck_id": "slices",
+		"front":   "Что делает cap?",
+		"back":    "Возвращает ёмкость слайса.",
+		"hint":    "capacity",
+	})
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("создание карточки: статус = %d: %s", resp.StatusCode, payload)
+	}
+	custom := decode(t, payload)["card"].(map[string]any)
+	customID := custom["id"].(string)
+	if custom["custom"] != true || custom["deck_id"] != "slices" {
+		t.Errorf("своя карточка = %v", custom)
+	}
+
+	// Удаление карточки из контента запрещено, своя — удаляется.
+	if resp, _ := env.do(t, http.MethodDelete, "/api/flashcards/slices-01", nil); resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("удаление контентной карточки: статус = %d", resp.StatusCode)
+	}
+	if resp, payload := env.do(t, http.MethodDelete, "/api/flashcards/"+customID, nil); resp.StatusCode != http.StatusOK {
+		t.Errorf("удаление своей карточки: статус = %d: %s", resp.StatusCode, payload)
+	}
+
+	// Оценка карточки, затем сброс колоды.
+	resp, payload = env.do(t, http.MethodGet, "/api/flashcards/queue?deck=slices&limit=2", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("очередь: %s", payload)
+	}
+	cards := decode(t, payload)["cards"].([]any)
+	firstID := cards[0].(map[string]any)["id"].(string)
+	if resp, payload := env.do(t, http.MethodPost, "/api/flashcards/"+firstID+"/review",
+		map[string]any{"grade": "easy"}); resp.StatusCode != http.StatusOK {
+		t.Fatalf("повторение: %s", payload)
+	}
+
+	resp, payload = env.do(t, http.MethodPost, "/api/flashcards/decks/slices/reset", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("сброс: статус = %d: %s", resp.StatusCode, payload)
+	}
+	if decode(t, payload)["reset"].(float64) < 1 {
+		t.Errorf("сброс вернул %s", payload)
+	}
+	if resp, _ := env.do(t, http.MethodPost, "/api/flashcards/decks/nope/reset", nil); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("сброс неизвестной колоды: статус = %d", resp.StatusCode)
+	}
+
+	// Сводка остаётся согласованной после сброса.
+	resp, payload = env.do(t, http.MethodGet, "/api/flashcards/stats", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("статистика: %s", payload)
+	}
+	stats := decode(t, payload)["stats"].(map[string]any)
+	if stats["reviews"].(float64) != 0 || stats["due"].(float64) != 100 {
+		t.Errorf("после сброса: %v", stats)
+	}
+
+	// Перечитывание контента не ломает прогресс и возвращает счётчики.
+	resp, payload = env.do(t, http.MethodPost, "/api/content/reload", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("reload: статус = %d: %s", resp.StatusCode, payload)
+	}
+	reloaded := decode(t, payload)
+	if reloaded["decks"].(float64) != 12 || reloaded["flashcards"].(float64) != 100 {
+		t.Errorf("reload = %v", reloaded)
+	}
+}

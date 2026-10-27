@@ -4,6 +4,9 @@ import type {
   CourseResponse,
   DashboardResponse,
   LessonContentResponse,
+  Flashcard,
+  FlashcardQueue,
+  FlashcardsOverview,
   Meta,
   Note,
   NoteFolder,
@@ -556,4 +559,140 @@ export const noteCreatedFixture = {
     folder: 'Общее',
     lesson_id: undefined,
   } satisfies Note,
+}
+
+const cardBasics: Flashcard = {
+  id: 'basics-01',
+  deck_id: 'basics',
+  front: 'С чего начинается программа на Go?',
+  back: 'С `package main` и функции `func main()`.',
+  hint: 'Первая строка — package.',
+  ease: 2.5,
+  interval_days: 0,
+  repetitions: 0,
+  lapses: 0,
+  due_at: '2026-10-27T09:00:00Z',
+  custom: false,
+  reviews: 0,
+  new: true,
+  learning: false,
+}
+
+const cardTypes: Flashcard = {
+  ...cardBasics,
+  id: 'types-01',
+  deck_id: 'types',
+  front: 'Сколько байт занимает rune?',
+  back: 'Четыре: rune — это int32.',
+  hint: 'int32',
+  reviews: 2,
+  repetitions: 1,
+  interval_days: 3,
+  new: false,
+  learning: false,
+}
+
+export const flashcardsOverviewFixture: FlashcardsOverview = {
+  source: 'content/flashcards/decks.json',
+  decks: [
+    {
+      id: 'basics',
+      title: 'Основы синтаксиса',
+      description: 'Пакеты, точка входа, переменные и константы.',
+      level: 'beginner',
+      icon: 'sparkles',
+      module: 1,
+      total: 9,
+      due: 9,
+      new: 9,
+      learned: 0,
+      custom: 0,
+      progress: 0,
+    },
+    {
+      id: 'types',
+      title: 'Типы и значения',
+      description: 'int, rune, byte, iota и приведение типов.',
+      level: 'beginner',
+      icon: 'shapes',
+      module: 1,
+      total: 8,
+      due: 3,
+      new: 1,
+      learned: 5,
+      custom: 1,
+      progress: 63,
+    },
+    {
+      id: 'errors',
+      title: 'Ошибки и паника',
+      description: 'Обёртка ошибок, errors.Is/As, panic и recover.',
+      level: 'advanced',
+      icon: 'alert-triangle',
+      module: 6,
+      total: 8,
+      due: 0,
+      new: 0,
+      learned: 8,
+      custom: 0,
+      progress: 100,
+    },
+  ],
+  stats: {
+    total: 100,
+    due: 12,
+    new: 64,
+    learned: 24,
+    reviews: 40,
+    reviews_today: 7,
+    accuracy: 78,
+    streak: 3,
+    days: Array.from({ length: 14 }, (_, index) => ({
+      date: `2026-10-${String(14 + index).padStart(2, '0')}`,
+      count: index % 3 === 0 ? 4 : index % 4 === 0 ? 2 : 0,
+    })),
+  },
+}
+
+export const flashcardQueueFixture: FlashcardQueue = {
+  cards: [cardBasics, cardTypes],
+  remaining: 2,
+  limit: 20,
+}
+
+export const flashcardQueueSingleFixture: FlashcardQueue = {
+  cards: [cardBasics],
+  remaining: 1,
+  limit: 20,
+}
+
+export const flashcardQueueEmptyFixture: FlashcardQueue = {
+  cards: [],
+  remaining: 0,
+  limit: 20,
+}
+
+export const reviewResultFixture = {
+  card: {
+    ...cardBasics,
+    reviews: 1,
+    repetitions: 1,
+    interval_days: 1,
+    new: false,
+    ease: 2.5,
+    due_at: '2026-10-28T09:00:00Z',
+  },
+  stats: flashcardsOverviewFixture.stats,
+  due: 11,
+}
+
+export const customCardFixture = {
+  card: {
+    ...cardBasics,
+    id: 'custom-abc123',
+    deck_id: 'basics',
+    front: 'Что такое defer?',
+    back: 'Отложенный вызов.',
+    custom: true,
+  },
 }

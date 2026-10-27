@@ -20,6 +20,8 @@ export const queryKeys = {
   notes: (filters: string) => ['notes', filters] as const,
   note: (id: string) => ['note', id] as const,
   lessonNotes: (lessonId: string) => ['lesson-notes', lessonId] as const,
+  flashcards: () => ['flashcards'] as const,
+  flashcardQueue: (deck: string, limit: number) => ['flashcard-queue', deck, limit] as const,
 }
 
 export function useMeta() {
@@ -122,6 +124,25 @@ export function useLessonNotes(lessonId: string | undefined) {
     queryFn: () => api.notes({ lesson: lessonId as string }),
     enabled: Boolean(lessonId),
     staleTime: 5_000,
+    retry: false,
+  })
+}
+
+export function useFlashcards() {
+  return useQuery({
+    queryKey: queryKeys.flashcards(),
+    queryFn: () => api.flashcards(),
+    staleTime: 10_000,
+  })
+}
+
+/** Очередь повторения запрашивается только когда сессия действительно начата. */
+export function useFlashcardQueue(deck: string | null, limit = 20) {
+  return useQuery({
+    queryKey: queryKeys.flashcardQueue(deck ?? '', limit),
+    queryFn: () => api.flashcardQueue({ deck: deck ?? undefined, limit }),
+    enabled: deck !== null,
+    staleTime: 0,
     retry: false,
   })
 }

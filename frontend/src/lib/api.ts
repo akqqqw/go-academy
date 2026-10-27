@@ -13,6 +13,11 @@ import type {
   FormatResponse,
   LessonCompletionResponse,
   LessonContentResponse,
+  CardGrade,
+  Flashcard,
+  FlashcardInput,
+  FlashcardsOverview,
+  FlashcardQueue,
   FoldersResponse,
   LessonProgressRecord,
   Meta,
@@ -20,6 +25,7 @@ import type {
   NoteInput,
   NoteResponse,
   NotesResponse,
+  ReviewResult,
   TagsResponse,
   ProgressResponse,
   RunResult,
@@ -235,6 +241,43 @@ export const api = {
     }),
 
   noteTags: () => request<TagsResponse>('/api/notes/tags'),
+
+  /** Колоды карточек и сводка повторений. */
+  flashcards: () => request<FlashcardsOverview>('/api/flashcards'),
+
+  flashcardQueue: (filters?: { deck?: string; limit?: number }) => {
+    const params = new URLSearchParams()
+    if (filters?.deck) params.set('deck', filters.deck)
+    if (filters?.limit) params.set('limit', String(filters.limit))
+    const search = params.toString()
+    return request<FlashcardQueue>(`/api/flashcards/queue${search ? `?${search}` : ''}`)
+  },
+
+  flashcardStats: () =>
+    request<{ stats: FlashcardsOverview['stats'] }>('/api/flashcards/stats'),
+
+  reviewFlashcard: (id: string, grade: CardGrade) =>
+    request<ReviewResult>(`/api/flashcards/${encodeURIComponent(id)}/review`, {
+      method: 'POST',
+      body: JSON.stringify({ grade }),
+    }),
+
+  createFlashcard: (input: FlashcardInput) =>
+    request<{ card: Flashcard }>('/api/flashcards', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  deleteFlashcard: (id: string) =>
+    request<{ deleted: boolean; id: string }>(`/api/flashcards/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+
+  resetDeck: (id: string) =>
+    request<{ reset: number; deck_id: string }>(
+      `/api/flashcards/decks/${encodeURIComponent(id)}/reset`,
+      { method: 'POST' },
+    ),
 
   /** Список заданий с фильтрами: сложность, модуль, статус и поиск. */
   exercises: (filters?: {
