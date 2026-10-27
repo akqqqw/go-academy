@@ -11,6 +11,7 @@ import { LearningPage } from '@/pages/learning-page'
 import { NotesPage } from '@/pages/notes-page'
 import { PracticePage } from '@/pages/practice-page'
 import { ProgressPage } from '@/pages/progress-page'
+import { QuizPage } from '@/pages/quiz-page'
 import { QuizzesPage } from '@/pages/quizzes-page'
 import { SettingsPage } from '@/pages/settings-page'
 import { watchSystemTheme } from '@/store/settings'
@@ -110,6 +111,7 @@ export default function App() {
               <Route path="notes/:noteId" element={<NotesPage />} />
               <Route path="flashcards" element={<FlashcardsPage />} />
               <Route path="quizzes" element={<QuizzesPage />} />
+              <Route path="quizzes/:quizId" element={<QuizPage />} />
               <Route path="progress" element={<ProgressPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />

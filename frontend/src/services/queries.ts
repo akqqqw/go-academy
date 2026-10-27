@@ -22,6 +22,8 @@ export const queryKeys = {
   lessonNotes: (lessonId: string) => ['lesson-notes', lessonId] as const,
   flashcards: () => ['flashcards'] as const,
   flashcardQueue: (deck: string, limit: number) => ['flashcard-queue', deck, limit] as const,
+  quizzes: () => ['quizzes'] as const,
+  quiz: (id: string) => ['quiz', id] as const,
 }
 
 export function useMeta() {
@@ -124,6 +126,24 @@ export function useLessonNotes(lessonId: string | undefined) {
     queryFn: () => api.notes({ lesson: lessonId as string }),
     enabled: Boolean(lessonId),
     staleTime: 5_000,
+    retry: false,
+  })
+}
+
+export function useQuizzes() {
+  return useQuery({
+    queryKey: queryKeys.quizzes(),
+    queryFn: () => api.quizzes(),
+    staleTime: 10_000,
+  })
+}
+
+export function useQuiz(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.quiz(id ?? ''),
+    queryFn: () => api.quiz(id as string),
+    enabled: Boolean(id),
+    staleTime: 10_000,
     retry: false,
   })
 }

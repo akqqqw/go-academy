@@ -15,6 +15,7 @@ import (
 	"goacademy/internal/database"
 	"goacademy/internal/practice"
 	"goacademy/internal/progress"
+	"goacademy/internal/quizzes"
 	"goacademy/internal/runner"
 	"goacademy/internal/static"
 	"goacademy/internal/storage"
@@ -22,26 +23,28 @@ import (
 
 // Server хранит зависимости HTTP-слоя и собранный роутер.
 type Server struct {
-	cfg        config.Config
-	log        *slog.Logger
-	db         *database.DB
-	settings   *storage.Settings
-	activity   *storage.Activity
-	lessons    *storage.Lessons
-	history    *storage.History
-	backups    *storage.Backups
-	drafts     *storage.Drafts
-	notes      *storage.Notes
-	flashcards *storage.Flashcards
-	exAttempts *storage.ExerciseProgress
-	stats      *progress.Service
-	course     *course.Store
-	cardDecks  *cards.Store
-	exercises  *practice.Store
-	runner     *runner.Runner
-	static     *static.Handler
-	started    time.Time
-	handler    http.Handler
+	cfg          config.Config
+	log          *slog.Logger
+	db           *database.DB
+	settings     *storage.Settings
+	activity     *storage.Activity
+	lessons      *storage.Lessons
+	history      *storage.History
+	backups      *storage.Backups
+	drafts       *storage.Drafts
+	notes        *storage.Notes
+	flashcards   *storage.Flashcards
+	quizStore    *quizzes.Store
+	quizAttempts *storage.Quizzes
+	exAttempts   *storage.ExerciseProgress
+	stats        *progress.Service
+	course       *course.Store
+	cardDecks    *cards.Store
+	exercises    *practice.Store
+	runner       *runner.Runner
+	static       *static.Handler
+	started      time.Time
+	handler      http.Handler
 	// routeMethods хранит методы для каждого пути: нужно, чтобы отвечать 405,
 	// а не 404, когда маршрут существует, но метод неверный.
 	routeMethods map[string][]string
@@ -85,8 +88,14 @@ func New(cfg config.Config, db *database.DB, logger *slog.Logger) *Server {
 		s.log.Warn("колоды карточек не загружены", "error", err)
 	}
 	s.flashcards = storage.NewFlashcards(db, s.cardDecks)
+	s.quizAttempts = storage.NewQuizzes(db)
 	if _, err := s.flashcards.Sync(context.Background()); err != nil {
 		s.log.Warn("карточки не синхронизированы с базой", "error", err)
+	}
+	// Викторины тоже читаются из content/; прогресс попыток — в SQLite.
+	s.quizStore = quizzes.NewStore(cfg.ContentDir)
+	if err := s.quizStore.Reload(); err != nil {
+		s.log.Warn("викторины не загружены", "error", err)
 	}
 	s.handler = s.routes()
 	return s
@@ -151,6 +160,12 @@ func (s *Server) routes() http.Handler {
 	s.handle(mux, http.MethodDelete, "/api/flashcards/{id}", s.handleFlashcardDelete)
 	s.handle(mux, http.MethodPost, "/api/flashcards/{id}/review", s.handleFlashcardReview)
 	s.handle(mux, http.MethodPost, "/api/flashcards/decks/{id}/reset", s.handleDeckReset)
+
+	// Викторины: вопросы, проверка ответов и история попыток.
+	s.handle(mux, http.MethodGet, "/api/quizzes", s.handleQuizzesList)
+	s.handle(mux, http.MethodGet, "/api/quizzes/{id}", s.handleQuizGet)
+	s.handle(mux, http.MethodPost, "/api/quizzes/{id}/submit", s.handleQuizSubmit)
+	s.handle(mux, http.MethodGet, "/api/quizzes/{id}/history", s.handleQuizHistory)
 
 	// Программа курса и контент.
 	s.handle(mux, http.MethodGet, "/api/course", s.handleCourse)

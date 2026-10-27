@@ -12,10 +12,10 @@ import (
 
 // Stage описывает текущий этап разработки приложения. Значение выводится в
 // разделе «Настройки», чтобы было понятно, какие разделы уже работают.
-const Stage = 6
+const Stage = 7
 
 // StageLabel — человекочитаемое название этапа.
-const StageLabel = "Этап 6 — карточки: 12 колод, интервальное повторение SM-2"
+const StageLabel = "Этап 7 — викторины: 5 типов вопросов, объяснения и разбор ответов"
 
 type appInfo struct {
 	Name       string `json:"name"`
@@ -49,6 +49,7 @@ type contentInfo struct {
 	Flashcards    int    `json:"flashcards"`
 	Decks         int    `json:"decks"`
 	Quizzes       int    `json:"quizzes"`
+	Questions     int    `json:"questions"`
 	ContentDir    string `json:"content_dir"`
 	FrontendReady bool   `json:"frontend_ready"`
 }
@@ -125,6 +126,7 @@ func (s *Server) handleMeta(w http.ResponseWriter, r *http.Request) {
 			Flashcards:    extras.Flashcards,
 			Decks:         extras.Decks,
 			Quizzes:       extras.Quizzes,
+			Questions:     extras.Questions,
 			ContentDir:    s.cfg.ContentDir,
 			FrontendReady: s.FrontendReady(),
 		},
@@ -199,6 +201,10 @@ func (s *Server) handleReloadContent(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "flashcards_sync_failed", err.Error())
 		return
 	}
+	if err := s.quizStore.Reload(); err != nil {
+		writeError(w, http.StatusInternalServerError, "quiz_catalog_invalid", err.Error())
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":     "reloaded",
 		"modules":    len(catalog.Modules),
@@ -207,6 +213,8 @@ func (s *Server) handleReloadContent(w http.ResponseWriter, r *http.Request) {
 		"exercises":  len(exercises.Exercises),
 		"decks":      len(s.cardDecks.Decks()),
 		"flashcards": synced,
+		"quizzes":    len(s.quizStore.All()),
+		"questions":  s.quizStore.TotalQuestions(),
 	})
 }
 

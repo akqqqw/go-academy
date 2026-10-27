@@ -683,3 +683,104 @@ export interface FlashcardInput {
   back: string
   hint?: string
 }
+
+/** Типы вопросов викторины. */
+export type QuizQuestionType = 'single' | 'multiple' | 'true_false' | 'input' | 'code'
+
+export interface QuizOption {
+  id: string
+  text: string
+}
+
+/** Вопрос викторины без ответа: он приходит только в разборе. */
+export interface QuizQuestion {
+  id: string
+  type: QuizQuestionType
+  prompt: string
+  code?: string
+  options?: QuizOption[]
+}
+
+export interface QuizProgress {
+  attempts: number
+  best_score: number
+  best_total: number
+  best_percent: number
+  last_score: number
+  last_total: number
+  last_at?: string
+  passed: boolean
+  solved_once: boolean
+}
+
+export interface QuizSummary {
+  id: string
+  title: string
+  description: string
+  module: number
+  module_title: string
+  level: string
+  questions: number
+  pass_threshold: number
+  progress: QuizProgress
+}
+
+export interface QuizAttempt {
+  id: number
+  quiz_id: string
+  module_id?: string
+  score: number
+  total: number
+  duration_ms: number
+  created_at: string
+  percent: number
+  passed: boolean
+}
+
+export interface QuizStats {
+  attempts: number
+  passed: number
+  average: number
+  best: number
+}
+
+export interface QuizzesResponse {
+  quizzes: QuizSummary[]
+  stats: QuizStats
+  history: QuizAttempt[]
+  source: string
+}
+
+export interface QuizDetail {
+  quiz: {
+    id: string
+    title: string
+    description: string
+    module: number
+    module_title: string
+    level: string
+    questions: QuizQuestion[]
+    pass_threshold: number
+  }
+  attempts: QuizAttempt[]
+}
+
+export interface QuizQuestionResult {
+  id: string
+  prompt: string
+  type: QuizQuestionType
+  correct: boolean
+  given: string[]
+  expected: string[]
+  explanation: string
+}
+
+export interface QuizResult {
+  attempt: QuizAttempt
+  questions: QuizQuestionResult[]
+  score: number
+  total: number
+  percent: number
+  passed: boolean
+  stats: QuizStats
+}

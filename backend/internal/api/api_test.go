@@ -1345,3 +1345,167 @@ func TestFlashcardCustomAndReset(t *testing.T) {
 		t.Errorf("reload = %v", reloaded)
 	}
 }
+
+func TestQuizzesListAndSubmit(t *testing.T) {
+	env := newTestEnv(t)
+
+	// Список: 6 викторин, 38 вопросов, прогресса ещё нет.
+	resp, payload := env.do(t, http.MethodGet, "/api/quizzes", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("список викторин: статус = %d: %s", resp.StatusCode, payload)
+	}
+	body := decode(t, payload)
+	quizzes := body["quizzes"].([]any)
+	if len(quizzes) != 6 {
+		t.Fatalf("викторин = %d, ожидалось 6", len(quizzes))
+	}
+	total := 0
+	for _, item := range quizzes {
+		quiz := item.(map[string]any)
+		total += int(quiz["questions"].(float64))
+		if quiz["title"] == "" || quiz["pass_threshold"].(float64) != 70 {
+			t.Errorf("викторина = %v", quiz)
+		}
+	}
+	if total != 38 {
+		t.Errorf("вопросов = %d, ожидалось 38", total)
+	}
+	if body["stats"].(map[string]any)["attempts"].(float64) != 0 {
+		t.Errorf("сводка = %v", body["stats"])
+	}
+
+	// Детали: вопросы без правильных ответов и объяснений.
+	resp, payload = env.do(t, http.MethodGet, "/api/quizzes/m01-basics", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("викторина: статус = %d: %s", resp.StatusCode, payload)
+	}
+	detail := decode(t, payload)
+	quiz := detail["quiz"].(map[string]any)
+	questions := quiz["questions"].([]any)
+	if len(questions) != 6 {
+		t.Fatalf("вопросов = %d, ожидалось 6", len(questions))
+	}
+	first := questions[0].(map[string]any)
+	for _, secret := range []string{"correct", "accepted", "explanation"} {
+		if _, ok := first[secret]; ok {
+			t.Errorf("в ответе не должно быть поля %q: %v", secret, first)
+		}
+	}
+	if first["type"] != "single" || len(first["options"].([]any)) != 4 {
+		t.Errorf("вопрос = %v", first)
+	}
+	types := map[string]bool{}
+	for _, item := range questions {
+		types[item.(map[string]any)["type"].(string)] = true
+	}
+	for _, wanted := range []string{"single", "multiple", "true_false", "input", "code"} {
+		if !types[wanted] {
+			t.Errorf("в викторине нет вопроса типа %q", wanted)
+		}
+	}
+
+	// Полностью верные ответы: 6 из 6, сдан.
+	answers := map[string][]string{
+		"m01-q1": {"a"},
+		"m01-q2": {"a", "c"},
+		"m01-q3": {"false"},
+		"m01-q4": {"const"},
+		"m01-q5": {"b"},
+		"m01-q6": {"c"},
+	}
+	resp, payload = env.do(t, http.MethodPost, "/api/quizzes/m01-basics/submit", map[string]any{
+		"answers":     answers,
+		"duration_ms": 125000,
+	})
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("проверка: статус = %d: %s", resp.StatusCode, payload)
+	}
+	result := decode(t, payload)
+	if result["score"].(float64) != 6 || result["percent"].(float64) != 100 || result["passed"] != true {
+		t.Errorf("результат = %v", result)
+	}
+	attempt := result["attempt"].(map[string]any)
+	if attempt["duration_ms"].(float64) != 125000 || attempt["quiz_id"] != "m01-basics" {
+		t.Errorf("попытка = %v", attempt)
+	}
+	results := result["questions"].([]any)
+	entries := results[0].(map[string]any)
+	if entries["correct"] != true || len(entries["expected"].([]any)) == 0 || entries["explanation"] == "" {
+		t.Errorf("разбор вопроса = %v", entries)
+	}
+
+	// Частично верные ответы: 2 из 6 — не сдано, но объяснения есть у всех.
+	resp, payload = env.do(t, http.MethodPost, "/api/quizzes/m01-basics/submit", map[string]any{
+		"answers": map[string][]string{"m01-q1": {"a"}, "m01-q3": {"true"}},
+	})
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("вторая проверка: %s", payload)
+	}
+	partial := decode(t, payload)
+	if partial["score"].(float64) != 1 || partial["passed"] != false {
+		t.Errorf("частичный результат = %v", partial)
+	}
+	for _, item := range partial["questions"].([]any) {
+		question := item.(map[string]any)
+		if question["explanation"] == "" || question["expected"] == nil {
+			t.Errorf("нет объяснения или ответа: %v", question)
+		}
+		// Для input ожидаемые ответы лежат в expected.
+		if question["type"] == "input" && len(question["expected"].([]any)) == 0 {
+			t.Errorf("input без допустимых ответов: %v", question)
+		}
+	}
+
+	// Прогресс после двух попыток.
+	resp, payload = env.do(t, http.MethodGet, "/api/quizzes", nil)
+	body = decode(t, payload)
+	for _, item := range body["quizzes"].([]any) {
+		entry := item.(map[string]any)
+		if entry["id"] != "m01-basics" {
+			continue
+		}
+		progress := entry["progress"].(map[string]any)
+		if progress["attempts"].(float64) != 2 || progress["best_percent"].(float64) != 100 || progress["passed"] != false {
+			t.Errorf("прогресс викторины = %v", progress)
+		}
+	}
+	stats := body["stats"].(map[string]any)
+	if stats["attempts"].(float64) != 2 || stats["passed"].(float64) != 1 || stats["best"].(float64) != 100 {
+		t.Errorf("сводка = %v", stats)
+	}
+
+	// История попыток.
+	resp, payload = env.do(t, http.MethodGet, "/api/quizzes/m01-basics/history", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("история: %s", payload)
+	}
+	if len(decode(t, payload)["attempts"].([]any)) != 2 {
+		t.Errorf("история = %s", payload)
+	}
+
+	// Ошибки: неизвестная викторина, пустые ответы, некорректный JSON.
+	if resp, _ := env.do(t, http.MethodGet, "/api/quizzes/nope", nil); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("неизвестная викторина: статус = %d", resp.StatusCode)
+	}
+	if resp, _ := env.do(t, http.MethodPost, "/api/quizzes/m01-basics/submit", map[string]any{"answers": map[string]string{}}); resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("пустые ответы: статус = %d", resp.StatusCode)
+	}
+	if resp, _ := env.do(t, http.MethodPost, "/api/quizzes/m01-basics/submit", map[string]any{"answers": "нет"}); resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("некорректный JSON: статус = %d", resp.StatusCode)
+	}
+	if resp, _ := env.do(t, http.MethodDelete, "/api/quizzes/m01-basics", nil); resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Errorf("неверный метод: статус = %d", resp.StatusCode)
+	}
+}
+
+func TestQuizContentReload(t *testing.T) {
+	env := newTestEnv(t)
+	resp, payload := env.do(t, http.MethodPost, "/api/content/reload", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("reload: статус = %d: %s", resp.StatusCode, payload)
+	}
+	body := decode(t, payload)
+	if body["quizzes"].(float64) != 6 || body["questions"].(float64) != 38 {
+		t.Errorf("после перечитывания = %v", body)
+	}
+}

@@ -10,6 +10,9 @@ import type {
   Meta,
   Note,
   NoteFolder,
+  QuizDetail,
+  QuizResult,
+  QuizzesResponse,
   NotesResponse,
   ProgressResponse,
   Settings,
@@ -696,3 +699,200 @@ export const customCardFixture = {
     custom: true,
   },
 }
+
+const quizQuestions = [
+  {
+    id: 'm01-q1',
+    type: 'single' as const,
+    prompt: 'С какой строки начинается исполняемая программа на Go?',
+    options: [
+      { id: 'a', text: '`package main`' },
+      { id: 'b', text: '`package app`' },
+      { id: 'c', text: '`func init()`' },
+    ],
+  },
+  {
+    id: 'm01-q2',
+    type: 'multiple' as const,
+    prompt: 'Какие утверждения о `:=` верны?',
+    options: [
+      { id: 'a', text: 'Работает только внутри функций' },
+      { id: 'b', text: 'Можно на уровне пакета' },
+      { id: 'c', text: 'Требует хотя бы одну новую переменную' },
+    ],
+  },
+  {
+    id: 'm01-q3',
+    type: 'true_false' as const,
+    prompt: 'В Go есть тернарный оператор `?:`.',
+  },
+  {
+    id: 'm01-q4',
+    type: 'input' as const,
+    prompt: 'Каким ключевым словом объявляется константа?',
+  },
+  {
+    id: 'm01-q5',
+    type: 'code' as const,
+    prompt: 'Что выведет эта программа?',
+    code: 'for i, r := range "Go" {\n\tfmt.Println(i, string(r))\n}',
+    options: [
+      { id: 'a', text: '`0 о`' },
+      { id: 'b', text: '`1 о`' },
+    ],
+  },
+]
+
+export const quizzesFixture: QuizzesResponse = {
+  source: 'content/quizzes/quizzes.json',
+  quizzes: [
+    {
+      id: 'm01-basics',
+      title: 'Модуль 1: основы языка',
+      description: 'Пакеты, переменные, типы и циклы — базовый тест.',
+      module: 1,
+      module_title: 'Введение в Go',
+      level: 'beginner',
+      questions: 5,
+      pass_threshold: 70,
+      progress: {
+        attempts: 2,
+        best_score: 5,
+        best_total: 5,
+        best_percent: 100,
+        last_score: 4,
+        last_total: 5,
+        last_at: '2026-10-25T10:00:00Z',
+        passed: true,
+        solved_once: true,
+      },
+    },
+    {
+      id: 'm03-collections',
+      title: 'Модуль 3: срезы и мапы',
+      description: 'Длина и ёмкость, append, подслайсы и ключи мап.',
+      module: 3,
+      module_title: 'Коллекции',
+      level: 'intermediate',
+      questions: 6,
+      pass_threshold: 70,
+      progress: {
+        attempts: 1,
+        best_score: 3,
+        best_total: 6,
+        best_percent: 50,
+        last_score: 3,
+        last_total: 6,
+        last_at: '2026-10-24T09:00:00Z',
+        passed: false,
+        solved_once: false,
+      },
+    },
+    {
+      id: 'final-core',
+      title: 'Итоговый тест: ядро языка',
+      description: 'Смешанные вопросы по модулям 1–5 и 8.',
+      module: 0,
+      module_title: 'Итоговый тест',
+      level: 'advanced',
+      questions: 7,
+      pass_threshold: 70,
+      progress: {
+        attempts: 0,
+        best_score: 0,
+        best_total: 0,
+        best_percent: 0,
+        last_score: 0,
+        last_total: 0,
+        passed: false,
+        solved_once: false,
+      },
+    },
+  ],
+  stats: { attempts: 3, passed: 1, average: 72, best: 100 },
+  history: [
+    {
+      id: 3,
+      quiz_id: 'm01-basics',
+      module_id: 'm01',
+      score: 4,
+      total: 5,
+      duration_ms: 92_000,
+      created_at: '2026-10-25T10:00:00Z',
+      percent: 80,
+      passed: true,
+    },
+    {
+      id: 2,
+      quiz_id: 'm03-collections',
+      module_id: 'm03',
+      score: 3,
+      total: 6,
+      duration_ms: 84_000,
+      created_at: '2026-10-24T09:00:00Z',
+      percent: 50,
+      passed: false,
+    },
+  ],
+}
+
+export const quizDetailFixture: QuizDetail = {
+  quiz: {
+    id: 'm01-basics',
+    title: 'Модуль 1: основы языка',
+    description: 'Пакеты, переменные, типы и циклы — базовый тест.',
+    module: 1,
+    module_title: 'Введение в Go',
+    level: 'beginner',
+    questions: quizQuestions,
+    pass_threshold: 70,
+  },
+  attempts: [
+    {
+      id: 3,
+      quiz_id: 'm01-basics',
+      module_id: 'm01',
+      score: 4,
+      total: 5,
+      duration_ms: 92_000,
+      created_at: '2026-10-25T10:00:00Z',
+      percent: 80,
+      passed: true,
+    },
+  ],
+}
+
+function buildQuizResult(correct: boolean): QuizResult {
+  return {
+    attempt: {
+      id: 4,
+      quiz_id: 'm01-basics',
+      module_id: 'm01',
+      score: correct ? 5 : 1,
+      total: 5,
+      duration_ms: 64_000,
+      created_at: '2026-10-26T11:00:00Z',
+      percent: correct ? 100 : 20,
+      passed: correct,
+    },
+    questions: quizQuestions.map((question) => ({
+      id: question.id,
+      prompt: question.prompt,
+      type: question.type,
+      correct,
+      given: question.type === 'input' ? ['const'] : ['a'],
+      expected: question.type === 'input' ? ['const'] : ['a'],
+      explanation: correct
+        ? 'Верно: объяснение к вопросу.'
+        : 'Объяснение: правильный вариант — a.',
+    })),
+    score: correct ? 5 : 1,
+    total: 5,
+    percent: correct ? 100 : 20,
+    passed: correct,
+    stats: { attempts: 3, passed: 2, average: 74, best: 100 },
+  }
+}
+
+export const quizPassedFixture = buildQuizResult(true)
+export const quizFailedFixture = buildQuizResult(false)

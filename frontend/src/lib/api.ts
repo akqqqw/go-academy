@@ -25,6 +25,9 @@ import type {
   NoteInput,
   NoteResponse,
   NotesResponse,
+  QuizDetail,
+  QuizResult,
+  QuizzesResponse,
   ReviewResult,
   TagsResponse,
   ProgressResponse,
@@ -241,6 +244,22 @@ export const api = {
     }),
 
   noteTags: () => request<TagsResponse>('/api/notes/tags'),
+
+  /** Викторины: список с прогрессом, вопросы и проверка ответов. */
+  quizzes: () => request<QuizzesResponse>('/api/quizzes'),
+
+  quiz: (id: string) => request<QuizDetail>(`/api/quizzes/${encodeURIComponent(id)}`),
+
+  submitQuiz: (id: string, answers: Record<string, string[]>, durationMs: number) =>
+    request<QuizResult>(`/api/quizzes/${encodeURIComponent(id)}/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ answers, duration_ms: durationMs }),
+    }),
+
+  quizHistory: (id: string) =>
+    request<{ attempts: QuizzesResponse['history'] }>(
+      `/api/quizzes/${encodeURIComponent(id)}/history`,
+    ),
 
   /** Колоды карточек и сводка повторений. */
   flashcards: () => request<FlashcardsOverview>('/api/flashcards'),
