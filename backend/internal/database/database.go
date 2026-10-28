@@ -68,11 +68,15 @@ func OpenPostgres(databaseURL string) (*DB, error) {
 		return nil, fmt.Errorf("открыть Postgres: %w", err)
 	}
 	pool.SetMaxOpenConns(10)
-	pool.SetMaxIdleConns(5)
+	// На время миграции не держим idle-соединения: Supabase pooler и сети между
+	// приложением и базой могут разрывать долгоживущие сессии. Схема применяется
+	// идемпотентными statement'ами, поэтому обрыв не оставляет открытую
+	// транзакцию с блокировками.
+	pool.SetMaxIdleConns(0)
 	pool.SetConnMaxLifetime(30 * time.Minute)
 	pool.SetConnMaxIdleTime(5 * time.Minute)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 	if err := pool.PingContext(ctx); err != nil {
 		_ = pool.Close()
@@ -84,6 +88,8 @@ func OpenPostgres(databaseURL string) (*DB, error) {
 		_ = pool.Close()
 		return nil, err
 	}
+	// После миграции пул снова может держать соединения для HTTP-запросов.
+	pool.SetMaxIdleConns(5)
 	return database, nil
 }
 

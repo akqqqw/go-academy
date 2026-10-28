@@ -80,6 +80,12 @@ func (d *DB) migrate(ctx context.Context) error {
 }
 
 // migratePostgres применяет схему Supabase: таблицы, RLS-политики и гранты.
+//
+// Каждый statement выполняется отдельно и фиксируется сразу. Схема написана
+// идемпотентно (IF NOT EXISTS, DROP POLICY IF EXISTS), поэтому прерванный
+// запуск можно безопасно повторить. Общая транзакция здесь не используется:
+// Supabase pooler может оставить её открытой при обрыве сети, а вместе с ней —
+// блокировки таблиц. Advisory lock по той же причине не применяется.
 func (d *DB) migratePostgres(ctx context.Context) error {
 	if _, err := d.DB.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations (
 		version INTEGER PRIMARY KEY,
@@ -89,49 +95,27 @@ func (d *DB) migratePostgres(ctx context.Context) error {
 		return fmt.Errorf("создать таблицу миграций Postgres: %w", err)
 	}
 
-	// Несколько инстансов serverless могут стартовать одновременно. Advisory
-	// lock сериализует миграцию, повторная проверка внутри транзакции не даёт
-	// применить схему дважды.
-	tx, err := d.DB.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("начать миграцию Postgres: %w", err)
-	}
-	if _, err := tx.ExecContext(ctx, "SELECT pg_advisory_xact_lock($1)", migrationLockID); err != nil {
-		_ = tx.Rollback()
-		return fmt.Errorf("заблокировать миграцию Postgres: %w", err)
-	}
-
 	var applied int
-	if err := tx.QueryRowContext(ctx,
+	if err := d.DB.QueryRowContext(ctx,
 		"SELECT COUNT(*) FROM schema_migrations WHERE version = 1").Scan(&applied); err != nil {
-		_ = tx.Rollback()
 		return fmt.Errorf("прочитать миграции Postgres: %w", err)
 	}
 	if applied > 0 {
-		_ = tx.Rollback()
 		return nil
 	}
 
 	for index, statement := range splitSQLStatements(schemaPostgres) {
-		if _, err := tx.ExecContext(ctx, statement); err != nil {
-			_ = tx.Rollback()
+		if _, err := d.DB.ExecContext(ctx, statement); err != nil {
 			return fmt.Errorf("миграция Postgres, запрос %d: %w", index+1, err)
 		}
 	}
-	if _, err := tx.ExecContext(ctx,
-		"INSERT INTO schema_migrations (version, name, applied_at) VALUES ($1, $2, $3)",
+	if _, err := d.DB.ExecContext(ctx,
+		"INSERT INTO schema_migrations (version, name, applied_at) VALUES ($1, $2, $3) ON CONFLICT (version) DO NOTHING",
 		1, "supabase_initial_schema", nowUTC()); err != nil {
-		_ = tx.Rollback()
 		return fmt.Errorf("записать миграцию Postgres: %w", err)
-	}
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("зафиксировать миграцию Postgres: %w", err)
 	}
 	return nil
 }
-
-// migrationLockID — произвольный постоянный ключ advisory-блокировки миграций.
-const migrationLockID = 741852963
 
 // splitSQLStatements делит файл на отдельные запросы: pgx не выполняет
 // несколько statement'ов в extended-протоколе. Точки с запятой внутри строк и
