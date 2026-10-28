@@ -3,9 +3,17 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 
-// Прокси на локальный Go-сервер: фронтенд всегда обращается к относительному /api,
+// Прокси на Go-сервер: фронтенд всегда обращается к относительному /api,
 // поэтому одинаково работает и в dev-режиме, и в собранной версии.
-const API_TARGET = process.env.GOACADEMY_API ?? 'http://127.0.0.1:8080'
+//
+// В браузере адрес бэкенда не нужен: в продакшене публичный /api маршрутизируется
+// на сервис backend в vercel.json, а в dev-режиме — этим прокси. Поэтому переменная
+// читается только сервером разработки и никогда не попадает в бандл (никаких VITE_).
+const API_TARGET =
+  process.env.GOACADEMY_API ??
+  // BACKEND_URL выставляет сервисный binding Vercel при запуске `vercel dev`.
+  process.env.BACKEND_URL ??
+  'http://127.0.0.1:8080'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],

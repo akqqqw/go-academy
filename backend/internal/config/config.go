@@ -15,6 +15,13 @@ import (
 // Version — версия приложения, подставляется при сборке через -ldflags.
 var Version = "0.1.0"
 
+// IsServerless сообщает, что приложение запущено на Vercel.
+//
+// В serverless-окружении платформа сама задаёт порт через PORT, слушать нужно
+// на всех интерфейсах, а на запись доступен только /tmp. Флаг ставит сама
+// платформа (VERCEL=1), вручную его выставлять не нужно.
+func IsServerless() bool { return envOr("VERCEL", "") != "" }
+
 // Config — все параметры запуска.
 type Config struct {
 	// Addr — адрес, на котором слушает HTTP-сервер.
@@ -55,8 +62,31 @@ func Load(args []string) (Config, error) {
 	fs := flag.NewFlagSet("go-academy", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 
-	host := fs.String("host", envOr("GOACADEMY_HOST", "127.0.0.1"), "хост HTTP-сервера")
-	port := fs.Int("port", envIntOr("GOACADEMY_PORT", 8080), "порт HTTP-сервера")
+	// На Vercel сервис backend собирается и запускается отдельно от frontend:
+	// статику раздаёт frontend-сервис, данные можно писать только в /tmp.
+	serverless := IsServerless()
+	hostDefault := "127.0.0.1"
+	dataDefault := "data"
+	contentDefault := "content"
+	frontendDefault := filepath.Join("frontend", "dist")
+	if serverless {
+		hostDefault = "0.0.0.0"
+		dataDefault = filepath.Join(os.TempDir(), "go-academy")
+		// При `vercel dev` сервис запускается из каталога backend/, поэтому
+		// контент лежит уровнем выше. В продакшене он встроен в бинарник и
+		// распаковывается при старте (см. internal/contentfs).
+		contentDefault = filepath.Join("..", "content")
+		frontendDefault = ""
+	}
+
+	portDefault := envIntOr("GOACADEMY_PORT", 8080)
+	if serverless && envOr("GOACADEMY_PORT", "") == "" {
+		// PORT задаёт платформа; GOACADEMY_PORT остаётся явным переопределением.
+		portDefault = envIntOr("PORT", 8080)
+	}
+
+	host := fs.String("host", envOr("GOACADEMY_HOST", hostDefault), "хост HTTP-сервера")
+	port := fs.Int("port", portDefault, "порт HTTP-сервера")
 	dataDir := fs.String("data", envOr("GOACADEMY_DATA_DIR", ""), "каталог данных (по умолчанию ./data)")
 	contentDir := fs.String("content", envOr("GOACADEMY_CONTENT_DIR", ""), "каталог контента (по умолчанию ./content)")
 	frontendDir := fs.String("frontend", envOr("GOACADEMY_FRONTEND_DIR", ""), "каталог собранного фронтенда (по умолчанию ./frontend/dist)")
@@ -76,9 +106,9 @@ func Load(args []string) (Config, error) {
 
 	cfg := Config{
 		Addr:            fmt.Sprintf("%s:%d", *host, *port),
-		DataDir:         defaultDir(*dataDir, "data"),
-		ContentDir:      defaultDir(*contentDir, "content"),
-		FrontendDir:     defaultDir(*frontendDir, filepath.Join("frontend", "dist")),
+		DataDir:         defaultDir(*dataDir, dataDefault),
+		ContentDir:      defaultDir(*contentDir, contentDefault),
+		FrontendDir:     defaultDir(*frontendDir, frontendDefault),
 		ShutdownTimeout: 10 * time.Second,
 		GoBinary:        strings.TrimSpace(*goBinary),
 		RunTimeout:      time.Duration(*runTimeout) * time.Second,
@@ -96,6 +126,10 @@ func Load(args []string) (Config, error) {
 func defaultDir(value, fallback string) string {
 	if value == "" {
 		value = fallback
+	}
+	if value == "" {
+		// Пустой путь — валидное значение: статику раздаёт отдельный сервис.
+		return ""
 	}
 	if abs, err := filepath.Abs(value); err == nil {
 		return abs

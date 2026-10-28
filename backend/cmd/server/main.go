@@ -10,11 +10,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"goacademy/internal/api"
 	"goacademy/internal/config"
+	"goacademy/internal/contentfs"
 	"goacademy/internal/database"
 	"goacademy/internal/storage"
 )
@@ -33,6 +35,17 @@ func run(args []string) error {
 	}
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
+	// На Vercel корневой content/ не попадает в сервис backend: контент встроен
+	// в бинарник и распаковывается в каталог данных (/tmp). Локально шаг
+	// пропускается — Materialize вернёт false.
+	extractedDir := filepath.Join(cfg.DataDir, "content")
+	if extracted, err := contentfs.Materialize(extractedDir); err != nil {
+		return fmt.Errorf("подготовить встроенный контент: %w", err)
+	} else if extracted {
+		cfg.ContentDir = extractedDir
+		logger.Info("контент распакован из бинарника", "dir", extractedDir)
+	}
 
 	db, err := database.Open(cfg.DBPath())
 	if err != nil {
