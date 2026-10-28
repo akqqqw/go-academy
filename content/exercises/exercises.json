@@ -1,0 +1,659 @@
+{
+  "version": 1,
+  "exercises": [
+    {
+      "id": "hello-greet",
+      "module": "m01",
+      "title": "Приветствие по имени",
+      "summary": "Первая функция: собрать строку из литералов и параметра.",
+      "difficulty": "easy",
+      "topics": [
+        "функции",
+        "строки",
+        "fmt"
+      ],
+      "minutes": 5,
+      "statement": "## Условие\n\nРеализуйте функцию `Greet(name string) string`. Она возвращает приветствие в\nвиде `Привет, <имя>!`.\n\nНапример, `Greet(\"Мир\")` должно вернуть `Привет, Мир!`. Пустое имя — не ошибка:\n`Greet(\"\")` возвращает `Привет, !`.\n\n## Подсказка\n\nСтроки в Go складываются оператором `+`. Функция `fmt.Sprintf` делает то же\nсамое, но нагляднее, когда частей много.\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// Greet возвращает приветствие для имени name.\nfunc Greet(name string) string {\n\t// TODO: верните строку «Привет, <name>!»\n\treturn \"\"\n}\n\nfunc main() {\n\tfmt.Println(Greet(\"Мир\"))\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// Greet возвращает приветствие для имени name.\nfunc Greet(name string) string {\n\treturn \"Привет, \" + name + \"!\"\n}\n\nfunc main() {\n\tfmt.Println(Greet(\"Мир\"))\n}\n",
+      "hints": [
+        "Склеить три части можно оператором +: \"Привет, \" + name + \"!\".",
+        "fmt.Sprintf(\"Привет, %s!\", name) даёт тот же результат."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestGreetWorld приветствует по имени.\nfunc TestGreetWorld(t *testing.T) {\n\tif got := Greet(\"Мир\"); got != \"Привет, Мир!\" {\n\t\tt.Fatalf(\"Greet(\\\"Мир\\\") = %q, ожидалось %q\", got, \"Привет, Мир!\")\n\t}\n}\n\n// TestGreetAnotherName не привязывается к одному имени.\nfunc TestGreetAnotherName(t *testing.T) {\n\tif got := Greet(\"Go\"); got != \"Привет, Go!\" {\n\t\tt.Fatalf(\"Greet(\\\"Go\\\") = %q, ожидалось %q\", got, \"Привет, Go!\")\n\t}\n}\n\n// TestGreetEmptyName сохраняет восклицательный знак.\nfunc TestGreetEmptyName(t *testing.T) {\n\tif got := Greet(\"\"); got != \"Привет, !\" {\n\t\tt.Fatalf(\"Greet(\\\"\\\") = %q, ожидалось %q\", got, \"Привет, !\")\n\t}\n}\n"
+    },
+    {
+      "id": "sum-two",
+      "module": "m02",
+      "title": "Сумма двух чисел",
+      "summary": "Арифметика, параметры и возвращаемое значение.",
+      "difficulty": "easy",
+      "topics": [
+        "операторы",
+        "функции"
+      ],
+      "minutes": 5,
+      "statement": "## Условие\n\nНапишите функцию `Sum(a, b int) int`, которая возвращает сумму двух целых чисел.\n\nФункция должна работать и с отрицательными числами: `Sum(-2, 5)` возвращает `3`.\n\n## Пример\n\n```\nSum(2, 3)    // 5\nSum(-4, 4)   // 0\nSum(-7, -1)  // -8\n```\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// Sum возвращает сумму a и b.\nfunc Sum(a, b int) int {\n\t// TODO: верните сумму\n\treturn 0\n}\n\nfunc main() {\n\tfmt.Println(Sum(2, 3))\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// Sum возвращает сумму a и b.\nfunc Sum(a, b int) int {\n\treturn a + b\n}\n\nfunc main() {\n\tfmt.Println(Sum(2, 3))\n}\n",
+      "hints": [
+        "В Go нет неявного преобразования типов, но сложение двух int работает напрямую.",
+        "Знак чисел не влияет на оператор +."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestSumPositive складывает положительные числа.\nfunc TestSumPositive(t *testing.T) {\n\tif got := Sum(2, 3); got != 5 {\n\t\tt.Fatalf(\"Sum(2, 3) = %d, ожидалось 5\", got)\n\t}\n}\n\n// TestSumNegative работает с отрицательными числами.\nfunc TestSumNegative(t *testing.T) {\n\tif got := Sum(-7, -1); got != -8 {\n\t\tt.Fatalf(\"Sum(-7, -1) = %d, ожидалось -8\", got)\n\t}\n}\n\n// TestSumMixed даёт ноль для противоположных чисел.\nfunc TestSumMixed(t *testing.T) {\n\tif got := Sum(-4, 4); got != 0 {\n\t\tt.Fatalf(\"Sum(-4, 4) = %d, ожидалось 0\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "even-check",
+      "module": "m02",
+      "title": "Проверка на чётность",
+      "summary": "Условия и остаток от деления.",
+      "difficulty": "easy",
+      "topics": [
+        "условия",
+        "операторы"
+      ],
+      "minutes": 5,
+      "statement": "## Условие\n\nРеализуйте `IsEven(n int) bool`. Функция возвращает `true`, если число чётное,\nи `false`, если нечётное. Ноль считается чётным, отрицательные числа тоже\nпроверяются по общему правилу: `-3` нечётное, `-4` чётное.\n\n## Подсказка\n\nОстаток от деления в Go — оператор `%`. Для отрицательных чисел остаток бывает\nотрицательным, поэтому сравнивайте результат с нулём, а не с единицей.\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// IsEven сообщает, чётное ли число n.\nfunc IsEven(n int) bool {\n\t// TODO: проверьте остаток от деления на 2\n\treturn false\n}\n\nfunc main() {\n\tfmt.Println(IsEven(4), IsEven(7))\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// IsEven сообщает, чётное ли число n.\nfunc IsEven(n int) bool {\n\treturn n%2 == 0\n}\n\nfunc main() {\n\tfmt.Println(IsEven(4), IsEven(7))\n}\n",
+      "hints": [
+        "n % 2 == 0 — чётное число.",
+        "Ноль даёт 0 % 2 == 0, поэтому автоматически считается чётным."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestIsEvenPositive распознаёт чётные числа.\nfunc TestIsEvenPositive(t *testing.T) {\n\tif !IsEven(4) {\n\t\tt.Fatal(\"4 должно быть чётным\")\n\t}\n}\n\n// TestIsEvenOdd распознаёт нечётные числа.\nfunc TestIsEvenOdd(t *testing.T) {\n\tif IsEven(7) {\n\t\tt.Fatal(\"7 нечётное\")\n\t}\n}\n\n// TestIsEvenZero считает ноль чётным.\nfunc TestIsEvenZero(t *testing.T) {\n\tif !IsEven(0) {\n\t\tt.Fatal(\"0 чётное\")\n\t}\n}\n\n// TestIsEvenNegative проверяет отрицательные числа.\nfunc TestIsEvenNegative(t *testing.T) {\n\tif IsEven(-3) {\n\t\tt.Fatal(\"-3 нечётное\")\n\t}\n\tif !IsEven(-4) {\n\t\tt.Fatal(\"-4 чётное\")\n\t}\n}\n"
+    },
+    {
+      "id": "max-three",
+      "module": "m02",
+      "title": "Максимум из трёх",
+      "summary": "Вложенные условия и сравнение чисел.",
+      "difficulty": "easy",
+      "topics": [
+        "условия",
+        "функции"
+      ],
+      "minutes": 7,
+      "statement": "## Условие\n\nНапишите `Max3(a, b, c int) int`, которая возвращает наибольшее из трёх чисел.\nЕсли несколько чисел равны и являются максимумом, вернуть это значение.\n\n## Пример\n\n```\nMax3(1, 2, 3)   // 3\nMax3(9, 2, 1)   // 9\nMax3(4, 4, 1)   // 4\nMax3(-5, -2, -9) // -2\n```\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// Max3 возвращает наибольшее из a, b и c.\nfunc Max3(a, b, c int) int {\n\t// TODO: сравните числа между собой\n\treturn 0\n}\n\nfunc main() {\n\tfmt.Println(Max3(1, 2, 3))\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// Max3 возвращает наибольшее из a, b и c.\nfunc Max3(a, b, c int) int {\n\tbest := a\n\tif b > best {\n\t\tbest = b\n\t}\n\tif c > best {\n\t\tbest = c\n\t}\n\treturn best\n}\n\nfunc main() {\n\tfmt.Println(Max3(1, 2, 3))\n}\n",
+      "hints": [
+        "Начните с best := a, затем сравните best с b и c.",
+        "Функции max(a, b) для целых чисел появилась в Go 1.21, но надёжнее написать сравнение самим."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestMax3Last возвращает третье число.\nfunc TestMax3Last(t *testing.T) {\n\tif got := Max3(1, 2, 3); got != 3 {\n\t\tt.Fatalf(\"Max3(1, 2, 3) = %d, ожидалось 3\", got)\n\t}\n}\n\n// TestMax3First возвращает первое число.\nfunc TestMax3First(t *testing.T) {\n\tif got := Max3(9, 2, 1); got != 9 {\n\t\tt.Fatalf(\"Max3(9, 2, 1) = %d, ожидалось 9\", got)\n\t}\n}\n\n// TestMax3Equal не путается с равными числами.\nfunc TestMax3Equal(t *testing.T) {\n\tif got := Max3(4, 4, 1); got != 4 {\n\t\tt.Fatalf(\"Max3(4, 4, 1) = %d, ожидалось 4\", got)\n\t}\n}\n\n// TestMax3Negative работает с отрицательными числами.\nfunc TestMax3Negative(t *testing.T) {\n\tif got := Max3(-5, -2, -9); got != -2 {\n\t\tt.Fatalf(\"Max3(-5, -2, -9) = %d, ожидалось -2\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "fizz-buzz",
+      "module": "m02",
+      "title": "FizzBuzz",
+      "summary": "Switch без выражения и порядок проверок.",
+      "difficulty": "easy",
+      "topics": [
+        "условия",
+        "switch"
+      ],
+      "minutes": 8,
+      "statement": "## Условие\n\nКлассическая задача. Функция `FizzBuzz(n int) string` возвращает:\n\n- `FizzBuzz`, если число делится и на 3, и на 5;\n- `Fizz`, если делится только на 3;\n- `Buzz`, если делится только на 5;\n- само число в виде строки в остальных случаях.\n\nПорядок проверок важен: для 15 ответ `FizzBuzz`, а не `Fizz`.\n\n## Пример\n\n```\nFizzBuzz(3)  // Fizz\nFizzBuzz(5)  // Buzz\nFizzBuzz(15) // FizzBuzz\nFizzBuzz(7)  // 7\n```\n\nДля преобразования числа в строку используйте `strconv.Itoa`.\n",
+      "starter_code": "package main\n\nimport (\n\t\"fmt\"\n\t\"strconv\"\n)\n\n// FizzBuzz возвращает Fizz, Buzz, FizzBuzz или число строкой.\nfunc FizzBuzz(n int) string {\n\t// TODO: проверьте делимость на 15, затем на 3 и на 5\n\treturn strconv.Itoa(n)\n}\n\nfunc main() {\n\tfor i := 1; i <= 15; i++ {\n\t\tfmt.Println(FizzBuzz(i))\n\t}\n}\n",
+      "solution": "package main\n\nimport (\n\t\"fmt\"\n\t\"strconv\"\n)\n\n// FizzBuzz возвращает Fizz, Buzz, FizzBuzz или число строкой.\nfunc FizzBuzz(n int) string {\n\tswitch {\n\tcase n%15 == 0:\n\t\treturn \"FizzBuzz\"\n\tcase n%3 == 0:\n\t\treturn \"Fizz\"\n\tcase n%5 == 0:\n\t\treturn \"Buzz\"\n\tdefault:\n\t\treturn strconv.Itoa(n)\n\t}\n}\n\nfunc main() {\n\tfor i := 1; i <= 15; i++ {\n\t\tfmt.Println(FizzBuzz(i))\n\t}\n}\n",
+      "hints": [
+        "switch без выражения заменяет цепочку if/else if.",
+        "Условие n%15 == 0 должно стоять раньше n%3 == 0, иначе 15 превратится в Fizz."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestFizzBuzzThree возвращает Fizz для кратных трём.\nfunc TestFizzBuzzThree(t *testing.T) {\n\tif got := FizzBuzz(3); got != \"Fizz\" {\n\t\tt.Fatalf(\"FizzBuzz(3) = %q, ожидалось Fizz\", got)\n\t}\n}\n\n// TestFizzBuzzFive возвращает Buzz для кратных пяти.\nfunc TestFizzBuzzFive(t *testing.T) {\n\tif got := FizzBuzz(5); got != \"Buzz\" {\n\t\tt.Fatalf(\"FizzBuzz(5) = %q, ожидалось Buzz\", got)\n\t}\n}\n\n// TestFizzBuzzBoth отдаёт приоритет FizzBuzz.\nfunc TestFizzBuzzBoth(t *testing.T) {\n\tif got := FizzBuzz(15); got != \"FizzBuzz\" {\n\t\tt.Fatalf(\"FizzBuzz(15) = %q, ожидалось FizzBuzz\", got)\n\t}\n\tif got := FizzBuzz(45); got != \"FizzBuzz\" {\n\t\tt.Fatalf(\"FizzBuzz(45) = %q, ожидалось FizzBuzz\", got)\n\t}\n}\n\n// TestFizzBuzzNumber возвращает число строкой.\nfunc TestFizzBuzzNumber(t *testing.T) {\n\tif got := FizzBuzz(7); got != \"7\" {\n\t\tt.Fatalf(\"FizzBuzz(7) = %q, ожидалось 7\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "grade-switch",
+      "module": "m02",
+      "title": "Оценка по баллам",
+      "summary": "Границы диапазонов и switch с условиями.",
+      "difficulty": "easy",
+      "topics": [
+        "switch",
+        "условия"
+      ],
+      "minutes": 7,
+      "statement": "## Условие\n\nРеализуйте `Grade(score int) string` — перевод баллов в оценку:\n\n| Баллы | Оценка |\n| --- | --- |\n| 90 и больше | `A` |\n| 80–89 | `B` |\n| 70–79 | `C` |\n| 60–69 | `D` |\n| меньше 60 | `F` |\n\nБаллы больше 100 тоже получают `A`: функция не обязана проверять корректность\nвхода.\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// Grade переводит баллы в оценку A–F.\nfunc Grade(score int) string {\n\t// TODO: используйте switch с условиями в порядке убывания\n\treturn \"F\"\n}\n\nfunc main() {\n\tfmt.Println(Grade(95), Grade(72), Grade(41))\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// Grade переводит баллы в оценку A–F.\nfunc Grade(score int) string {\n\tswitch {\n\tcase score >= 90:\n\t\treturn \"A\"\n\tcase score >= 80:\n\t\treturn \"B\"\n\tcase score >= 70:\n\t\treturn \"C\"\n\tcase score >= 60:\n\t\treturn \"D\"\n\tdefault:\n\t\treturn \"F\"\n\t}\n}\n\nfunc main() {\n\tfmt.Println(Grade(95), Grade(72), Grade(41))\n}\n",
+      "hints": [
+        "Проверяйте диапазоны от большего к меньшему.",
+        "После return в case break не нужен."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestGradeBoundaries проверяет границы диапазонов.\nfunc TestGradeBoundaries(t *testing.T) {\n\tcases := map[int]string{90: \"A\", 89: \"B\", 80: \"B\", 79: \"C\", 70: \"C\", 69: \"D\", 60: \"D\", 59: \"F\"}\n\tfor score, want := range cases {\n\t\tif got := Grade(score); got != want {\n\t\t\tt.Errorf(\"Grade(%d) = %q, ожидалось %q\", score, got, want)\n\t\t}\n\t}\n}\n\n// TestGradeHighAndLow обрабатывает крайние значения.\nfunc TestGradeHighAndLow(t *testing.T) {\n\tif got := Grade(120); got != \"A\" {\n\t\tt.Errorf(\"Grade(120) = %q, ожидалось A\", got)\n\t}\n\tif got := Grade(0); got != \"F\" {\n\t\tt.Errorf(\"Grade(0) = %q, ожидалось F\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "abs-value",
+      "module": "m03",
+      "title": "Модуль числа",
+      "summary": "Функция без побочных эффектов и работа с отрицательными числами.",
+      "difficulty": "easy",
+      "topics": [
+        "функции",
+        "условия"
+      ],
+      "minutes": 5,
+      "statement": "## Условие\n\nНапишите функцию `Abs(n int) int`, возвращающую модуль числа: для `-5` это `5`,\nдля `5` — тоже `5`, для нуля — ноль.\n\nНе используйте пакет `math`: его функции работают с `float64`.\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// Abs возвращает модуль числа n.\nfunc Abs(n int) int {\n\t// TODO: измените знак, если число отрицательное\n\treturn n\n}\n\nfunc main() {\n\tfmt.Println(Abs(-5), Abs(3))\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// Abs возвращает модуль числа n.\nfunc Abs(n int) int {\n\tif n < 0 {\n\t\treturn -n\n\t}\n\treturn n\n}\n\nfunc main() {\n\tfmt.Println(Abs(-5), Abs(3))\n}\n",
+      "hints": [
+        "Проверьте n < 0 и верните -n.",
+        "Ветка для неотрицательных чисел возвращает n как есть."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestAbsNegative превращает отрицательное число в положительное.\nfunc TestAbsNegative(t *testing.T) {\n\tif got := Abs(-5); got != 5 {\n\t\tt.Fatalf(\"Abs(-5) = %d, ожидалось 5\", got)\n\t}\n}\n\n// TestAbsPositive не меняет положительное число.\nfunc TestAbsPositive(t *testing.T) {\n\tif got := Abs(3); got != 3 {\n\t\tt.Fatalf(\"Abs(3) = %d, ожидалось 3\", got)\n\t}\n}\n\n// TestAbsZero оставляет ноль нулём.\nfunc TestAbsZero(t *testing.T) {\n\tif got := Abs(0); got != 0 {\n\t\tt.Fatalf(\"Abs(0) = %d, ожидалось 0\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "min-max-slice",
+      "module": "m03",
+      "title": "Минимум и максимум среза",
+      "summary": "Несколько возвращаемых значений и обход среза.",
+      "difficulty": "easy",
+      "topics": [
+        "функции",
+        "срезы",
+        "range"
+      ],
+      "minutes": 8,
+      "statement": "## Условие\n\nРеализуйте `MinMax(nums []int) (int, int)`: функция возвращает минимум и\nмаксимум среза. Для пустого среза верните `(0, 0)`.\n\nПорядок возвращаемых значений: сначала минимум, потом максимум.\n\n## Пример\n\n```\nMinMax([]int{3, 1, 4}) // 1, 4\nMinMax([]int{7})       // 7, 7\nMinMax(nil)            // 0, 0\n```\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// MinMax возвращает минимум и максимум среза nums.\nfunc MinMax(nums []int) (int, int) {\n\t// TODO: обработайте пустой срез и найдите оба значения за один проход\n\treturn 0, 0\n}\n\nfunc main() {\n\tfmt.Println(MinMax([]int{3, 1, 4}))\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// MinMax возвращает минимум и максимум среза nums.\nfunc MinMax(nums []int) (int, int) {\n\tif len(nums) == 0 {\n\t\treturn 0, 0\n\t}\n\tlow, high := nums[0], nums[0]\n\tfor _, value := range nums[1:] {\n\t\tif value < low {\n\t\t\tlow = value\n\t\t}\n\t\tif value > high {\n\t\t\thigh = value\n\t\t}\n\t}\n\treturn low, high\n}\n\nfunc main() {\n\tfmt.Println(MinMax([]int{3, 1, 4}))\n}\n",
+      "hints": [
+        "Срез может быть nil — len(nil) == 0, отдельная проверка на nil не нужна.",
+        "Начните с nums[0] для обоих значений, иначе максимум останется нулём."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestMinMaxMixed находит оба значения в неотсортированном срезе.\nfunc TestMinMaxMixed(t *testing.T) {\n\tlow, high := MinMax([]int{3, 1, 4, -2, 9})\n\tif low != -2 || high != 9 {\n\t\tt.Fatalf(\"MinMax = (%d, %d), ожидалось (-2, 9)\", low, high)\n\t}\n}\n\n// TestMinMaxSingle возвращает одно и то же значение.\nfunc TestMinMaxSingle(t *testing.T) {\n\tlow, high := MinMax([]int{7})\n\tif low != 7 || high != 7 {\n\t\tt.Fatalf(\"MinMax = (%d, %d), ожидалось (7, 7)\", low, high)\n\t}\n}\n\n// TestMinMaxEmpty возвращает нули для пустого среза.\nfunc TestMinMaxEmpty(t *testing.T) {\n\tfor _, input := range [][]int{nil, {}} {\n\t\tlow, high := MinMax(input)\n\t\tif low != 0 || high != 0 {\n\t\t\tt.Fatalf(\"MinMax(%v) = (%d, %d), ожидалось (0, 0)\", input, low, high)\n\t\t}\n\t}\n}\n\n// TestMinMaxAllNegative не принимает ноль за минимум.\nfunc TestMinMaxAllNegative(t *testing.T) {\n\tlow, high := MinMax([]int{-5, -1, -9})\n\tif low != -9 || high != -1 {\n\t\tt.Fatalf(\"MinMax = (%d, %d), ожидалось (-9, -1)\", low, high)\n\t}\n}\n"
+    },
+    {
+      "id": "sum-slice",
+      "module": "m04",
+      "title": "Сумма элементов среза",
+      "summary": "Обход range и накопление значения.",
+      "difficulty": "easy",
+      "topics": [
+        "срезы",
+        "range",
+        "циклы"
+      ],
+      "minutes": 5,
+      "statement": "## Условие\n\nНапишите `SumSlice(nums []int) int`: сумма всех элементов среза. Для пустого\nсреза результат — `0`.\n\n## Пример\n\n```\nSumSlice([]int{1, 2, 3}) // 6\nSumSlice(nil)            // 0\n```\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// SumSlice возвращает сумму элементов nums.\nfunc SumSlice(nums []int) int {\n\t// TODO: сложите элементы в цикле\n\treturn 0\n}\n\nfunc main() {\n\tfmt.Println(SumSlice([]int{1, 2, 3}))\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// SumSlice возвращает сумму элементов nums.\nfunc SumSlice(nums []int) int {\n\ttotal := 0\n\tfor _, value := range nums {\n\t\ttotal += value\n\t}\n\treturn total\n}\n\nfunc main() {\n\tfmt.Println(SumSlice([]int{1, 2, 3}))\n}\n",
+      "hints": [
+        "Накопитель начинается с нуля.",
+        "for _, value := range nums даёт значения без индексов."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestSumSlicePositive складывает положительные числа.\nfunc TestSumSlicePositive(t *testing.T) {\n\tif got := SumSlice([]int{1, 2, 3}); got != 6 {\n\t\tt.Fatalf(\"SumSlice = %d, ожидалось 6\", got)\n\t}\n}\n\n// TestSumSliceNegative учитывает отрицательные числа.\nfunc TestSumSliceNegative(t *testing.T) {\n\tif got := SumSlice([]int{-5, 10, -3}); got != 2 {\n\t\tt.Fatalf(\"SumSlice = %d, ожидалось 2\", got)\n\t}\n}\n\n// TestSumSliceEmpty возвращает ноль.\nfunc TestSumSliceEmpty(t *testing.T) {\n\tif got := SumSlice(nil); got != 0 {\n\t\tt.Fatalf(\"SumSlice(nil) = %d, ожидалось 0\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "reverse-string",
+      "module": "m04",
+      "title": "Переворот строки",
+      "summary": "Руны вместо байтов: кириллица не должна ломаться.",
+      "difficulty": "easy",
+      "topics": [
+        "строки",
+        "руны",
+        "срезы"
+      ],
+      "minutes": 10,
+      "statement": "## Условие\n\nРеализуйте `Reverse(s string) string` — строку в обратном порядке.\n\nВажно: строка в Go — это набор байтов, а кириллическая буква занимает два\nбайта. Если переворачивать байты, получится «битая» строка. Поэтому сначала\nпреобразуйте строку в срез рун:\n\n```\nrunes := []rune(s)\n```\n\n## Пример\n\n```\nReverse(\"abc\")     // cba\nReverse(\"привет\")  // тевирп\nReverse(\"\")        // \"\"\n```\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// Reverse возвращает строку s в обратном порядке.\nfunc Reverse(s string) string {\n\t// TODO: преобразуйте строку в []rune и соберите её с конца\n\treturn s\n}\n\nfunc main() {\n\tfmt.Println(Reverse(\"привет\"))\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// Reverse возвращает строку s в обратном порядке.\nfunc Reverse(s string) string {\n\trunes := []rune(s)\n\tfor left, right := 0, len(runes)-1; left < right; left, right = left+1, right-1 {\n\t\trunes[left], runes[right] = runes[right], runes[left]\n\t}\n\treturn string(runes)\n}\n\nfunc main() {\n\tfmt.Println(Reverse(\"привет\"))\n}\n",
+      "hints": [
+        "[]rune(s) превращает строку в набор символов.",
+        "Меняйте элементы местами с двух концов: left < right.",
+        "string(runes) собирает строку обратно."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestReverseLatin переворачивает латиницу.\nfunc TestReverseLatin(t *testing.T) {\n\tif got := Reverse(\"abc\"); got != \"cba\" {\n\t\tt.Fatalf(\"Reverse(\\\"abc\\\") = %q, ожидалось cba\", got)\n\t}\n}\n\n// TestReverseCyrillic не ломает многобайтовые символы.\nfunc TestReverseCyrillic(t *testing.T) {\n\tif got := Reverse(\"привет\"); got != \"тевирп\" {\n\t\tt.Fatalf(\"Reverse(\\\"привет\\\") = %q, ожидалось тевирп\", got)\n\t}\n}\n\n// TestReverseEmpty возвращает пустую строку.\nfunc TestReverseEmpty(t *testing.T) {\n\tif got := Reverse(\"\"); got != \"\" {\n\t\tt.Fatalf(\"Reverse(\\\"\\\") = %q, ожидалось пусто\", got)\n\t}\n}\n\n// TestReversePalindrome не меняет палиндром.\nfunc TestReversePalindrome(t *testing.T) {\n\tif got := Reverse(\"шалаш\"); got != \"шалаш\" {\n\t\tt.Fatalf(\"Reverse(\\\"шалаш\\\") = %q\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "count-vowels",
+      "module": "m04",
+      "title": "Подсчёт гласных",
+      "summary": "Работа с рунами и множеством допустимых значений.",
+      "difficulty": "easy",
+      "topics": [
+        "строки",
+        "руны",
+        "map"
+      ],
+      "minutes": 8,
+      "statement": "## Условие\n\nНапишите `CountVowels(s string) int` — количество гласных латинских букв\n`a, e, i, o, u` в строке без учёта регистра.\n\nКириллица и согласные не считаются. Пробелы и цифры тоже.\n\n## Пример\n\n```\nCountVowels(\"Go Academy\") // 4  (o, A, a, e)\nCountVowels(\"rhythm\")     // 0\n```\n",
+      "starter_code": "package main\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\n// CountVowels считает гласные латинские буквы в строке.\nfunc CountVowels(s string) int {\n\t// TODO: приведите строку к нижнему регистру и проверьте каждую руну\n\t_ = strings.ToLower\n\treturn 0\n}\n\nfunc main() {\n\tfmt.Println(CountVowels(\"Go Academy\"))\n}\n",
+      "solution": "package main\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\n// CountVowels считает гласные латинские буквы в строке.\nfunc CountVowels(s string) int {\n\tcount := 0\n\tfor _, char := range strings.ToLower(s) {\n\t\tswitch char {\n\t\tcase 'a', 'e', 'i', 'o', 'u':\n\t\t\tcount++\n\t\t}\n\t}\n\treturn count\n}\n\nfunc main() {\n\tfmt.Println(CountVowels(\"Go Academy\"))\n}\n",
+      "hints": [
+        "strings.ToLower приводит строку к нижнему регистру целиком.",
+        "range по строке выдаёт руны (rune), а не байты.",
+        "switch с несколькими значениями в одном case заменяет набор if."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestCountVowelsMixed считает гласные в обоих регистрах.\nfunc TestCountVowelsMixed(t *testing.T) {\n\tif got := CountVowels(\"Go Academy\"); got != 4 {\n\t\tt.Fatalf(\"CountVowels(\\\"Go Academy\\\") = %d, ожидалось 4\", got)\n\t}\n}\n\n// TestCountVowelsNone возвращает ноль без гласных.\nfunc TestCountVowelsNone(t *testing.T) {\n\tif got := CountVowels(\"rhythm\"); got != 0 {\n\t\tt.Fatalf(\"CountVowels(\\\"rhythm\\\") = %d, ожидалось 0\", got)\n\t}\n}\n\n// TestCountVowelsCyrillic игнорирует кириллицу.\nfunc TestCountVowelsCyrillic(t *testing.T) {\n\tif got := CountVowels(\"Привет, Go\"); got != 1 {\n\t\tt.Fatalf(\"CountVowels(\\\"Привет, Go\\\") = %d, ожидалось 1\", got)\n\t}\n}\n\n// TestCountVowelsEmpty возвращает ноль для пустой строки.\nfunc TestCountVowelsEmpty(t *testing.T) {\n\tif got := CountVowels(\"\"); got != 0 {\n\t\tt.Fatalf(\"CountVowels(\\\"\\\") = %d, ожидалось 0\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "unique-words",
+      "module": "m04",
+      "title": "Уникальные слова",
+      "summary": "Map как множество и сохранение исходного порядка.",
+      "difficulty": "easy",
+      "topics": [
+        "map",
+        "срезы",
+        "строки"
+      ],
+      "minutes": 10,
+      "statement": "## Условие\n\nРеализуйте `Unique(words []string) []string` — список без повторов с\nсохранением порядка первого появления.\n\nДля пустого входа верните пустой, но не nil-срез? Достаточно `len(result) == 0`.\nПроверка сравнивает элементы, поэтому `nil` и `[]string{}` равнозначны.\n\n## Пример\n\n```\nUnique([]string{\"go\", \"ру\", \"go\", \"sql\"}) // [\"go\", \"ру\", \"sql\"]\n```\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// Unique убирает повторы, сохраняя порядок первого появления.\nfunc Unique(words []string) []string {\n\t// TODO: заведите map[string]bool для уже встреченных слов\n\treturn nil\n}\n\nfunc main() {\n\tfmt.Println(Unique([]string{\"go\", \"ру\", \"go\", \"sql\"}))\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// Unique убирает повторы, сохраняя порядок первого появления.\nfunc Unique(words []string) []string {\n\tseen := make(map[string]bool, len(words))\n\tresult := make([]string, 0, len(words))\n\tfor _, word := range words {\n\t\tif seen[word] {\n\t\t\tcontinue\n\t\t}\n\t\tseen[word] = true\n\t\tresult = append(result, word)\n\t}\n\treturn result\n}\n\nfunc main() {\n\tfmt.Println(Unique([]string{\"go\", \"ру\", \"go\", \"sql\"}))\n}\n",
+      "hints": [
+        "Map хранит, какие слова уже добавлены.",
+        "Порядок сохраняется, если добавлять в результат сразу при первом появлении.",
+        "append можно вызвать и для nil-среза — он создаст новый."
+      ],
+      "tests": "package main\n\nimport (\n\t\"reflect\"\n\t\"testing\"\n)\n\n// TestUniqueKeepsOrder удаляет повторы и сохраняет порядок.\nfunc TestUniqueKeepsOrder(t *testing.T) {\n\tgot := Unique([]string{\"go\", \"ру\", \"go\", \"sql\", \"ру\"})\n\twant := []string{\"go\", \"ру\", \"sql\"}\n\tif !reflect.DeepEqual(got, want) {\n\t\tt.Fatalf(\"Unique = %v, ожидалось %v\", got, want)\n\t}\n}\n\n// TestUniqueEmpty возвращает пустой результат.\nfunc TestUniqueEmpty(t *testing.T) {\n\tif got := Unique(nil); len(got) != 0 {\n\t\tt.Fatalf(\"Unique(nil) = %v, ожидалось пусто\", got)\n\t}\n}\n\n// TestUniqueAllSame оставляет одно слово.\nfunc TestUniqueAllSame(t *testing.T) {\n\tgot := Unique([]string{\"x\", \"x\", \"x\"})\n\tif len(got) != 1 || got[0] != \"x\" {\n\t\tt.Fatalf(\"Unique = %v, ожидалось [x]\", got)\n\t}\n}\n\n// TestUniqueCaseSensitive различает регистр.\nfunc TestUniqueCaseSensitive(t *testing.T) {\n\tgot := Unique([]string{\"Go\", \"go\"})\n\tif len(got) != 2 {\n\t\tt.Fatalf(\"Unique = %v, ожидалось два слова\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "word-count",
+      "module": "m04",
+      "title": "Частоты слов",
+      "summary": "Map со счётчиками и разбиение строки.",
+      "difficulty": "medium",
+      "topics": [
+        "map",
+        "строки",
+        "strings"
+      ],
+      "minutes": 12,
+      "statement": "## Условие\n\nНапишите `WordCount(text string) map[string]int`: сколько раз каждое слово\nвстречается в тексте.\n\nПравила:\n\n- слова разделяются пробелами, запятыми и точками: проще всего заменить\n  знаки на пробелы и использовать `strings.Fields`;\n- регистр не важен: `Go` и `go` — одно слово;\n- пустой текст даёт пустую карту.\n\n## Пример\n\n```\nWordCount(\"Go go, SQL\") // map[\"go\":2 \"sql\":1]\n```\n",
+      "starter_code": "package main\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\n// WordCount считает частоты слов без учёта регистра.\nfunc WordCount(text string) map[string]int {\n\t// TODO: приведите текст к нижнему регистру, очистите знаки и разбейте на слова\n\t_ = strings.Fields\n\treturn map[string]int{}\n}\n\nfunc main() {\n\tfmt.Println(WordCount(\"Go go, SQL\"))\n}\n",
+      "solution": "package main\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\n// WordCount считает частоты слов без учёта регистра.\nfunc WordCount(text string) map[string]int {\n\tcleaned := strings.Map(func(char rune) rune {\n\t\tswitch char {\n\t\tcase ',', '.', '!', '?', ';', ':', '\"', '\\'':\n\t\t\treturn ' '\n\t\t}\n\t\treturn char\n\t}, strings.ToLower(text))\n\n\tcounts := make(map[string]int)\n\tfor _, word := range strings.Fields(cleaned) {\n\t\tcounts[word]++\n\t}\n\treturn counts\n}\n\nfunc main() {\n\tfmt.Println(WordCount(\"Go go, SQL\"))\n}\n",
+      "hints": [
+        "strings.ToLower — регистр, strings.Fields — разбиение по пробелам.",
+        "counts[word]++ работает даже для отсутствующего ключа: map отдаёт 0.",
+        "strings.Map позволяет заменить знаки препинания на пробелы одним проходом."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestWordCountMixed считает слова без учёта регистра.\nfunc TestWordCountMixed(t *testing.T) {\n\tgot := WordCount(\"Go go, SQL\")\n\tif got[\"go\"] != 2 || got[\"sql\"] != 1 {\n\t\tt.Fatalf(\"WordCount = %v\", got)\n\t}\n}\n\n// TestWordCountPunctuation не считает знаки частью слов.\nfunc TestWordCountPunctuation(t *testing.T) {\n\tgot := WordCount(\"Go! Go? Go.\")\n\tif got[\"go\"] != 3 {\n\t\tt.Fatalf(\"WordCount = %v, ожидалось go:3\", got)\n\t}\n}\n\n// TestWordCountEmpty возвращает пустую карту.\nfunc TestWordCountEmpty(t *testing.T) {\n\tif got := WordCount(\"   \"); len(got) != 0 {\n\t\tt.Fatalf(\"WordCount = %v, ожидалась пустая карта\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "palindrome",
+      "module": "m04",
+      "title": "Палиндром",
+      "summary": "Нормализация строки и сравнение рун.",
+      "difficulty": "medium",
+      "topics": [
+        "строки",
+        "руны",
+        "unicode"
+      ],
+      "minutes": 12,
+      "statement": "## Условие\n\nРеализуйте `IsPalindrome(s string) bool`. Палиндром читается одинаково в обе\nстороны.\n\nСтроку нужно нормализовать: привести к нижнему регистру и убрать всё, кроме\nбукв и цифр. Так `\"А роза упала на лапу Азора\"` — палиндром, и `\"Madam, I'm\nAdam\"` тоже.\n\nПодсказка: `unicode.IsLetter` и `unicode.IsDigit` помогут отфильтровать\nсимволы, `unicode.ToLower` — изменить регистр.\n\n## Пример\n\n```\nIsPalindrome(\"шалаш\")   // true\nIsPalindrome(\"Go\")      // false\n```\n",
+      "starter_code": "package main\n\nimport (\n\t\"fmt\"\n\t\"unicode\"\n)\n\n// IsPalindrome проверяет, читается ли строка одинаково в обе стороны.\nfunc IsPalindrome(s string) bool {\n\t// TODO: оставьте только буквы и цифры в нижнем регистре, затем сравните с обратной строкой\n\t_ = unicode.IsLetter\n\treturn false\n}\n\nfunc main() {\n\tfmt.Println(IsPalindrome(\"А роза упала на лапу Азора\"))\n}\n",
+      "solution": "package main\n\nimport (\n\t\"fmt\"\n\t\"unicode\"\n)\n\n// IsPalindrome проверяет, читается ли строка одинаково в обе стороны.\nfunc IsPalindrome(s string) bool {\n\tcleaned := make([]rune, 0, len(s))\n\tfor _, char := range s {\n\t\tif unicode.IsLetter(char) || unicode.IsDigit(char) {\n\t\t\tcleaned = append(cleaned, unicode.ToLower(char))\n\t\t}\n\t}\n\tfor left, right := 0, len(cleaned)-1; left < right; left, right = left+1, right-1 {\n\t\tif cleaned[left] != cleaned[right] {\n\t\t\treturn false\n\t\t}\n\t}\n\treturn true\n}\n\nfunc main() {\n\tfmt.Println(IsPalindrome(\"А роза упала на лапу Азора\"))\n}\n",
+      "hints": [
+        "Сначала соберите нормализованный срез рун.",
+        "Сравнивайте пары с концов, а не только строку с её переворотом — так быстрее остановиться на ошибке.",
+        "unicode.ToLower работает и с кириллицей."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestPalindromeSimple распознаёт простой палиндром.\nfunc TestPalindromeSimple(t *testing.T) {\n\tif !IsPalindrome(\"шалаш\") {\n\t\tt.Fatal(\"шалаш — палиндром\")\n\t}\n}\n\n// TestPalindromeSentence игнорирует пробелы и регистр.\nfunc TestPalindromeSentence(t *testing.T) {\n\tif !IsPalindrome(\"А роза упала на лапу Азора\") {\n\t\tt.Fatal(\"фраза должна быть палиндромом\")\n\t}\n\tif !IsPalindrome(\"Madam, I'm Adam\") {\n\t\tt.Fatal(\"фраза должна быть палиндромом\")\n\t}\n}\n\n// TestPalindromeNo отвергает обычную строку.\nfunc TestPalindromeNo(t *testing.T) {\n\tif IsPalindrome(\"Go\") {\n\t\tt.Fatal(\"Go — не палиндром\")\n\t}\n}\n\n// TestPalindromeEmpty считает пустую строку палиндромом.\nfunc TestPalindromeEmpty(t *testing.T) {\n\tif !IsPalindrome(\"\") {\n\t\tt.Fatal(\"пустая строка — палиндром\")\n\t}\n\tif !IsPalindrome(\"!!\") {\n\t\tt.Fatal(\"строка без букв — палиндром\")\n\t}\n}\n"
+    },
+    {
+      "id": "slugify",
+      "module": "m04",
+      "title": "Слаг для URL",
+      "summary": "Нормализация текста: регистр, пробелы и разделители.",
+      "difficulty": "medium",
+      "topics": [
+        "строки",
+        "unicode",
+        "strings"
+      ],
+      "minutes": 12,
+      "statement": "## Условие\n\nНапишите `Slugify(title string) string` — пригодный для URL идентификатор.\n\nПравила:\n\n1. привести к нижнему регистру;\n2. заменить любые последовательности пробелов и знаков `_`, `,`, `.`, `!`, `?`\n   на один дефис;\n3. убрать дефисы в начале и в конце строки.\n\nЛатинские буквы и цифры сохраняются. Кириллицу транслитерировать не нужно:\nона остаётся как есть.\n\n## Пример\n\n```\nSlugify(\"  Hello, Go World! \") // \"hello-go-world\"\nSlugify(\"Go\")                  // \"go\"\n```\n",
+      "starter_code": "package main\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\n// Slugify превращает заголовок в слаг для URL.\nfunc Slugify(title string) string {\n\t// TODO: приведите к нижнему регистру, замените разделители и обрежьте дефисы\n\t_ = strings.Trim\n\treturn \"\"\n}\n\nfunc main() {\n\tfmt.Println(Slugify(\"  Hello, Go World! \"))\n}\n",
+      "solution": "package main\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\n// Slugify превращает заголовок в слаг для URL.\nfunc Slugify(title string) string {\n\treplacer := strings.NewReplacer(\n\t\t\" \", \"-\", \"_\", \"-\", \",\", \"-\", \".\", \"-\", \"!\", \"-\", \"?\", \"-\",\n\t)\n\tslug := replacer.Replace(strings.ToLower(title))\n\tfor strings.Contains(slug, \"--\") {\n\t\tslug = strings.ReplaceAll(slug, \"--\", \"-\")\n\t}\n\treturn strings.Trim(slug, \"-\")\n}\n\nfunc main() {\n\tfmt.Println(Slugify(\"  Hello, Go World! \"))\n}\n",
+      "hints": [
+        "strings.NewReplacer заменяет сразу несколько подстрок за один проход.",
+        "После замены могут появиться двойные дефисы — схлопните их в цикле.",
+        "strings.Trim(slug, \"-\") убирает дефисы по краям."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestSlugifyBasic приводит заголовок к нижнему регистру.\nfunc TestSlugifyBasic(t *testing.T) {\n\tif got := Slugify(\"Go\"); got != \"go\" {\n\t\tt.Fatalf(\"Slugify = %q, ожидалось go\", got)\n\t}\n}\n\n// TestSlugifyPunctuation заменяет знаки дефисами.\nfunc TestSlugifyPunctuation(t *testing.T) {\n\tif got := Slugify(\"  Hello, Go World! \"); got != \"hello-go-world\" {\n\t\tt.Fatalf(\"Slugify = %q, ожидалось hello-go-world\", got)\n\t}\n}\n\n// TestSlugifyUnderscoreAndMultipleSpaces схлопывает разделители.\nfunc TestSlugifyUnderscoreAndMultipleSpaces(t *testing.T) {\n\tif got := Slugify(\"go___is   fun\"); got != \"go-is-fun\" {\n\t\tt.Fatalf(\"Slugify = %q, ожидалось go-is-fun\", got)\n\t}\n}\n\n// TestSlugifyTrimsEdgeDashes не оставляет дефисов по краям.\nfunc TestSlugifyTrimsEdgeDashes(t *testing.T) {\n\tif got := Slugify(\"...go...\"); got != \"go\" {\n\t\tt.Fatalf(\"Slugify = %q, ожидалось go\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "transpose-matrix",
+      "module": "m04",
+      "title": "Транспонирование матрицы",
+      "summary": "Двумерные срезы и аккуратная работа с пустым входом.",
+      "difficulty": "medium",
+      "topics": [
+        "срезы",
+        "циклы",
+        "матрицы"
+      ],
+      "minutes": 15,
+      "statement": "## Условие\n\nРеализуйте `Transpose(matrix [][]int) [][]int`: строки становятся столбцами.\n\nДля матрицы `2×3` результат будет `3×2`:\n\n```\n1 2 3        1 4\n4 5 6   →    2 5\n             3 6\n```\n\nПустая матрица и матрица без строк возвращают пустой результат (`len(result)\n== 0`).\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// Transpose меняет строки и столбцы местами.\nfunc Transpose(matrix [][]int) [][]int {\n\t// TODO: создайте результат размера [столбцы][строки]\n\treturn nil\n}\n\nfunc main() {\n\tfmt.Println(Transpose([][]int{{1, 2, 3}, {4, 5, 6}}))\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// Transpose меняет строки и столбцы местами.\nfunc Transpose(matrix [][]int) [][]int {\n\tif len(matrix) == 0 || len(matrix[0]) == 0 {\n\t\treturn [][]int{}\n\t}\n\trows, cols := len(matrix), len(matrix[0])\n\tresult := make([][]int, cols)\n\tfor col := 0; col < cols; col++ {\n\t\tresult[col] = make([]int, rows)\n\t\tfor row := 0; row < rows; row++ {\n\t\t\tresult[col][row] = matrix[row][col]\n\t\t}\n\t}\n\treturn result\n}\n\nfunc main() {\n\tfmt.Println(Transpose([][]int{{1, 2, 3}, {4, 5, 6}}))\n}\n",
+      "hints": [
+        "Размер результата — [количество столбцов][количество строк].",
+        "Сначала выделите внешний срез, затем в цикле каждой строке результата — внутренний.",
+        "Проверка len(matrix) == 0 защищает от паники на matrix[0]."
+      ],
+      "tests": "package main\n\nimport (\n\t\"reflect\"\n\t\"testing\"\n)\n\n// TestTransposeRectangular транспонирует матрицу 2×3.\nfunc TestTransposeRectangular(t *testing.T) {\n\tgot := Transpose([][]int{{1, 2, 3}, {4, 5, 6}})\n\twant := [][]int{{1, 4}, {2, 5}, {3, 6}}\n\tif !reflect.DeepEqual(got, want) {\n\t\tt.Fatalf(\"Transpose = %v, ожидалось %v\", got, want)\n\t}\n}\n\n// TestTransposeSquare транспонирует квадратную матрицу.\nfunc TestTransposeSquare(t *testing.T) {\n\tgot := Transpose([][]int{{1, 2}, {3, 4}})\n\twant := [][]int{{1, 3}, {2, 4}}\n\tif !reflect.DeepEqual(got, want) {\n\t\tt.Fatalf(\"Transpose = %v, ожидалось %v\", got, want)\n\t}\n}\n\n// TestTransposeEmpty не паникует на пустом входе.\nfunc TestTransposeEmpty(t *testing.T) {\n\tif got := Transpose(nil); len(got) != 0 {\n\t\tt.Fatalf(\"Transpose(nil) = %v\", got)\n\t}\n\tif got := Transpose([][]int{}); len(got) != 0 {\n\t\tt.Fatalf(\"Transpose([]) = %v\", got)\n\t}\n}\n\n// TestTransposeSingleRow делает столбец из строки.\nfunc TestTransposeSingleRow(t *testing.T) {\n\tgot := Transpose([][]int{{1, 2}})\n\twant := [][]int{{1}, {2}}\n\tif !reflect.DeepEqual(got, want) {\n\t\tt.Fatalf(\"Transpose = %v, ожидалось %v\", got, want)\n\t}\n}\n"
+    },
+    {
+      "id": "bank-account",
+      "module": "m05",
+      "title": "Счёт в банке",
+      "summary": "Структура, указательные методы и своя ошибка.",
+      "difficulty": "medium",
+      "topics": [
+        "структуры",
+        "методы",
+        "указатели",
+        "ошибки"
+      ],
+      "minutes": 15,
+      "statement": "## Условие\n\nОпишите банковский счёт:\n\n```go\ntype Account struct {\n\tbalance int\n}\n\nfunc NewAccount(initial int) *Account\nfunc (a *Account) Deposit(amount int)\nfunc (a *Account) Withdraw(amount int) error\nfunc (a *Account) Balance() int\n```\n\nПравила:\n\n- `NewAccount` создаёт счёт с начальным балансом;\n- `Deposit` увеличивает баланс;\n- `Withdraw` уменьшает баланс, но при нехватке денег возвращает ошибку\n  `ErrInsufficientFunds` и **не меняет** баланс;\n- `Balance` возвращает текущее значение.\n\nОшибка `ErrInsufficientFunds` уже объявлена в стартовом коде — используйте её,\nа не новую.\n\n## Почему указатель\n\nМетоды, которые меняют структуру, объявляются на указателе: `func (a *Account)`.\nИначе изменение достанется копии.\n",
+      "starter_code": "package main\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\n// ErrInsufficientFunds возвращается при попытке снять больше, чем есть.\nvar ErrInsufficientFunds = errors.New(\"недостаточно средств\")\n\n// Account — банковский счёт.\ntype Account struct {\n\tbalance int\n}\n\n// NewAccount создаёт счёт с начальным балансом.\nfunc NewAccount(initial int) *Account {\n\t// TODO: верните указатель на новую структуру\n\treturn &Account{}\n}\n\n// Deposit пополняет счёт.\nfunc (a *Account) Deposit(amount int) {\n\t// TODO: увеличьте баланс\n}\n\n// Withdraw снимает деньги, если их достаточно.\nfunc (a *Account) Withdraw(amount int) error {\n\t// TODO: проверьте баланс и верните ErrInsufficientFunds при нехватке\n\treturn nil\n}\n\n// Balance возвращает текущий баланс.\nfunc (a *Account) Balance() int {\n\treturn a.balance\n}\n\nfunc main() {\n\taccount := NewAccount(100)\n\taccount.Deposit(50)\n\tfmt.Println(account.Balance())\n}\n",
+      "solution": "package main\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\n// ErrInsufficientFunds возвращается при попытке снять больше, чем есть.\nvar ErrInsufficientFunds = errors.New(\"недостаточно средств\")\n\n// Account — банковский счёт.\ntype Account struct {\n\tbalance int\n}\n\n// NewAccount создаёт счёт с начальным балансом.\nfunc NewAccount(initial int) *Account {\n\treturn &Account{balance: initial}\n}\n\n// Deposit пополняет счёт.\nfunc (a *Account) Deposit(amount int) {\n\ta.balance += amount\n}\n\n// Withdraw снимает деньги, если их достаточно.\nfunc (a *Account) Withdraw(amount int) error {\n\tif amount > a.balance {\n\t\treturn ErrInsufficientFunds\n\t}\n\ta.balance -= amount\n\treturn nil\n}\n\n// Balance возвращает текущий баланс.\nfunc (a *Account) Balance() int {\n\treturn a.balance\n}\n\nfunc main() {\n\taccount := NewAccount(100)\n\taccount.Deposit(50)\n\tfmt.Println(account.Balance())\n}\n",
+      "hints": [
+        "&Account{balance: initial} создаёт структуру и возвращает указатель.",
+        "В Withdraw сначала проверьте amount > a.balance, только потом меняйте баланс.",
+        "Возвращайте ErrInsufficientFunds напрямую — интерфейс проверяет ошибку через errors.Is."
+      ],
+      "tests": "package main\n\nimport (\n\t\"errors\"\n\t\"testing\"\n)\n\n// TestAccountDepositAndBalance пополняет счёт.\nfunc TestAccountDepositAndBalance(t *testing.T) {\n\taccount := NewAccount(100)\n\taccount.Deposit(50)\n\tif got := account.Balance(); got != 150 {\n\t\tt.Fatalf(\"Balance = %d, ожидалось 150\", got)\n\t}\n}\n\n// TestAccountWithdraw снимает деньги.\nfunc TestAccountWithdraw(t *testing.T) {\n\taccount := NewAccount(100)\n\tif err := account.Withdraw(40); err != nil {\n\t\tt.Fatalf(\"Withdraw вернул ошибку: %v\", err)\n\t}\n\tif got := account.Balance(); got != 60 {\n\t\tt.Fatalf(\"Balance = %d, ожидалось 60\", got)\n\t}\n}\n\n// TestAccountWithdrawTooMuch возвращает ErrInsufficientFunds и не меняет баланс.\nfunc TestAccountWithdrawTooMuch(t *testing.T) {\n\taccount := NewAccount(30)\n\terr := account.Withdraw(100)\n\tif !errors.Is(err, ErrInsufficientFunds) {\n\t\tt.Fatalf(\"ошибка = %v, ожидалась ErrInsufficientFunds\", err)\n\t}\n\tif got := account.Balance(); got != 30 {\n\t\tt.Fatalf(\"баланс изменился: %d\", got)\n\t}\n}\n\n// TestAccountMethodsShareState проверяет, что методы меняют один и тот же счёт.\nfunc TestAccountMethodsShareState(t *testing.T) {\n\taccount := NewAccount(10)\n\tother := account\n\tother.Deposit(5)\n\tif got := account.Balance(); got != 15 {\n\t\tt.Fatalf(\"Balance = %d, ожидалось 15: методы должны быть на указателе\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "stack",
+      "module": "m05",
+      "title": "Стек на срезе",
+      "summary": "Структура с внутренним срезом и ошибка на пустом стеке.",
+      "difficulty": "medium",
+      "topics": [
+        "структуры",
+        "срезы",
+        "ошибки"
+      ],
+      "minutes": 15,
+      "statement": "## Условие\n\nРеализуйте стек целых чисел:\n\n```go\nvar ErrEmptyStack = errors.New(\"стек пуст\")\n\ntype Stack struct {\n\titems []int\n}\n\nfunc (s *Stack) Push(value int)\nfunc (s *Stack) Pop() (int, error)\nfunc (s *Stack) Len() int\nfunc (s *Stack) Peek() (int, error)\n```\n\n`Pop` возвращает последний добавленный элемент и удаляет его. На пустом стеке\n`Pop` и `Peek` возвращают `ErrEmptyStack` и `0`.\n\nОшибка `ErrEmptyStack` уже объявлена в стартовом коде.\n",
+      "starter_code": "package main\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\n// ErrEmptyStack возвращается при обращении к пустому стеку.\nvar ErrEmptyStack = errors.New(\"стек пуст\")\n\n// Stack — стек целых чисел.\ntype Stack struct {\n\titems []int\n}\n\n// Push кладёт значение на вершину стека.\nfunc (s *Stack) Push(value int) {\n\t// TODO\n}\n\n// Pop снимает верхний элемент.\nfunc (s *Stack) Pop() (int, error) {\n\t// TODO\n\treturn 0, nil\n}\n\n// Peek смотрит на верхний элемент, не снимая его.\nfunc (s *Stack) Peek() (int, error) {\n\t// TODO\n\treturn 0, nil\n}\n\n// Len возвращает количество элементов.\nfunc (s *Stack) Len() int {\n\treturn len(s.items)\n}\n\nfunc main() {\n\tvar stack Stack\n\tstack.Push(1)\n\tvalue, _ := stack.Pop()\n\tfmt.Println(value)\n}\n",
+      "solution": "package main\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\n// ErrEmptyStack возвращается при обращении к пустому стеку.\nvar ErrEmptyStack = errors.New(\"стек пуст\")\n\n// Stack — стек целых чисел.\ntype Stack struct {\n\titems []int\n}\n\n// Push кладёт значение на вершину стека.\nfunc (s *Stack) Push(value int) {\n\ts.items = append(s.items, value)\n}\n\n// Pop снимает верхний элемент.\nfunc (s *Stack) Pop() (int, error) {\n\tif len(s.items) == 0 {\n\t\treturn 0, ErrEmptyStack\n\t}\n\tlast := len(s.items) - 1\n\tvalue := s.items[last]\n\ts.items = s.items[:last]\n\treturn value, nil\n}\n\n// Peek смотрит на верхний элемент, не снимая его.\nfunc (s *Stack) Peek() (int, error) {\n\tif len(s.items) == 0 {\n\t\treturn 0, ErrEmptyStack\n\t}\n\treturn s.items[len(s.items)-1], nil\n}\n\n// Len возвращает количество элементов.\nfunc (s *Stack) Len() int {\n\treturn len(s.items)\n}\n\nfunc main() {\n\tvar stack Stack\n\tstack.Push(1)\n\tvalue, _ := stack.Pop()\n\tfmt.Println(value)\n}\n",
+      "hints": [
+        "Push — это append к внутреннему срезу.",
+        "Pop срезает последний элемент: s.items = s.items[:len(s.items)-1].",
+        "Проверка на пустоту должна быть до обращения к s.items[len-1], иначе паника."
+      ],
+      "tests": "package main\n\nimport (\n\t\"errors\"\n\t\"testing\"\n)\n\n// TestStackPushPop возвращает элементы в обратном порядке.\nfunc TestStackPushPop(t *testing.T) {\n\tvar stack Stack\n\tstack.Push(1)\n\tstack.Push(2)\n\tstack.Push(3)\n\n\tfor _, want := range []int{3, 2, 1} {\n\t\tgot, err := stack.Pop()\n\t\tif err != nil {\n\t\t\tt.Fatalf(\"Pop вернул ошибку: %v\", err)\n\t\t}\n\t\tif got != want {\n\t\t\tt.Fatalf(\"Pop = %d, ожидалось %d\", got, want)\n\t\t}\n\t}\n\tif stack.Len() != 0 {\n\t\tt.Fatalf(\"Len = %d, ожидалось 0\", stack.Len())\n\t}\n}\n\n// TestStackPopEmpty возвращает ErrEmptyStack.\nfunc TestStackPopEmpty(t *testing.T) {\n\tvar stack Stack\n\tif _, err := stack.Pop(); !errors.Is(err, ErrEmptyStack) {\n\t\tt.Fatalf(\"ошибка = %v, ожидалась ErrEmptyStack\", err)\n\t}\n}\n\n// TestStackPeek не снимает элемент.\nfunc TestStackPeek(t *testing.T) {\n\tvar stack Stack\n\tstack.Push(42)\n\tvalue, err := stack.Peek()\n\tif err != nil || value != 42 {\n\t\tt.Fatalf(\"Peek = (%d, %v)\", value, err)\n\t}\n\tif stack.Len() != 1 {\n\t\tt.Fatalf(\"Peek изменил размер стека: %d\", stack.Len())\n\t}\n}\n\n// TestStackPeekEmpty возвращает ErrEmptyStack.\nfunc TestStackPeekEmpty(t *testing.T) {\n\tvar stack Stack\n\tif _, err := stack.Peek(); !errors.Is(err, ErrEmptyStack) {\n\t\tt.Fatalf(\"ошибка = %v, ожидалась ErrEmptyStack\", err)\n\t}\n}\n"
+    },
+    {
+      "id": "shape-area",
+      "module": "m06",
+      "title": "Фигуры и интерфейс",
+      "summary": "Интерфейс Area, две реализации и подсчёт общей площади.",
+      "difficulty": "medium",
+      "topics": [
+        "интерфейсы",
+        "методы",
+        "структуры"
+      ],
+      "minutes": 15,
+      "statement": "## Условие\n\nОпишите интерфейс и две фигуры:\n\n```go\ntype Shape interface {\n\tArea() float64\n}\n\ntype Rect struct{ W, H float64 }\ntype Circle struct{ R float64 }\n\nfunc TotalArea(shapes []Shape) float64\n```\n\n- площадь прямоугольника — `W * H`;\n- площадь круга — `π * R²` (используйте `math.Pi`);\n- `TotalArea` складывает площади всех фигур, пустой срез даёт `0`.\n\nРеализация интерфейса в Go неявная: достаточно объявить методы `Area()`.\n",
+      "starter_code": "package main\n\nimport (\n\t\"fmt\"\n\t\"math\"\n)\n\n// Shape — фигура с площадью.\ntype Shape interface {\n\tArea() float64\n}\n\n// Rect — прямоугольник.\ntype Rect struct {\n\tW, H float64\n}\n\n// Area возвращает площадь прямоугольника.\nfunc (r Rect) Area() float64 {\n\t// TODO\n\treturn 0\n}\n\n// Circle — круг.\ntype Circle struct {\n\tR float64\n}\n\n// Area возвращает площадь круга.\nfunc (c Circle) Area() float64 {\n\t// TODO: math.Pi * c.R * c.R\n\t_ = math.Pi\n\treturn 0\n}\n\n// TotalArea складывает площади фигур.\nfunc TotalArea(shapes []Shape) float64 {\n\t// TODO\n\treturn 0\n}\n\nfunc main() {\n\tfmt.Println(TotalArea([]Shape{Rect{W: 2, H: 3}, Circle{R: 1}}))\n}\n",
+      "solution": "package main\n\nimport (\n\t\"fmt\"\n\t\"math\"\n)\n\n// Shape — фигура с площадью.\ntype Shape interface {\n\tArea() float64\n}\n\n// Rect — прямоугольник.\ntype Rect struct {\n\tW, H float64\n}\n\n// Area возвращает площадь прямоугольника.\nfunc (r Rect) Area() float64 {\n\treturn r.W * r.H\n}\n\n// Circle — круг.\ntype Circle struct {\n\tR float64\n}\n\n// Area возвращает площадь круга.\nfunc (c Circle) Area() float64 {\n\treturn math.Pi * c.R * c.R\n}\n\n// TotalArea складывает площади фигур.\nfunc TotalArea(shapes []Shape) float64 {\n\ttotal := 0.0\n\tfor _, shape := range shapes {\n\t\ttotal += shape.Area()\n\t}\n\treturn total\n}\n\nfunc main() {\n\tfmt.Println(TotalArea([]Shape{Rect{W: 2, H: 3}, Circle{R: 1}}))\n}\n",
+      "hints": [
+        "Методы на значении (r Rect) достаточно для интерфейса — указатель тоже подойдёт.",
+        "В цикле по shapes вызовите shape.Area(): тип известен только через интерфейс.",
+        "math.Pi — константа, импорт math уже есть."
+      ],
+      "tests": "package main\n\nimport (\n\t\"math\"\n\t\"testing\"\n)\n\n// TestRectArea считает площадь прямоугольника.\nfunc TestRectArea(t *testing.T) {\n\tif got := (Rect{W: 2, H: 3}).Area(); got != 6 {\n\t\tt.Fatalf(\"Area = %v, ожидалось 6\", got)\n\t}\n}\n\n// TestCircleArea считает площадь круга.\nfunc TestCircleArea(t *testing.T) {\n\tgot := (Circle{R: 2}).Area()\n\twant := math.Pi * 4\n\tif math.Abs(got-want) > 1e-9 {\n\t\tt.Fatalf(\"Area = %v, ожидалось %v\", got, want)\n\t}\n}\n\n// TestTotalAreaMixed складывает разные фигуры.\nfunc TestTotalAreaMixed(t *testing.T) {\n\tgot := TotalArea([]Shape{Rect{W: 2, H: 3}, Circle{R: 1}})\n\twant := 6 + math.Pi\n\tif math.Abs(got-want) > 1e-9 {\n\t\tt.Fatalf(\"TotalArea = %v, ожидалось %v\", got, want)\n\t}\n}\n\n// TestTotalAreaEmpty возвращает ноль.\nfunc TestTotalAreaEmpty(t *testing.T) {\n\tif got := TotalArea(nil); got != 0 {\n\t\tt.Fatalf(\"TotalArea(nil) = %v, ожидалось 0\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "safe-divide",
+      "module": "m07",
+      "title": "Деление с ошибкой",
+      "summary": "Своя ошибка, errors.New и проверка через errors.Is.",
+      "difficulty": "medium",
+      "topics": [
+        "ошибки",
+        "errors.Is"
+      ],
+      "minutes": 10,
+      "statement": "## Условие\n\nРеализуйте `Divide(a, b int) (int, error)` — целочисленное деление.\n\nПри `b == 0` функция возвращает `0` и ошибку `ErrDivisionByZero`. Эта ошибка уже\nобъявлена в стартовом коде.\n\nВажно: интерфейс проверяет ошибку через `errors.Is`, поэтому возвращайте именно\n`ErrDivisionByZero`, а не новую ошибку с тем же текстом.\n\n## Пример\n\n```\nDivide(10, 2) // 5, nil\nDivide(7, 2)  // 3, nil\nDivide(1, 0)  // 0, ErrDivisionByZero\n```\n",
+      "starter_code": "package main\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\n// ErrDivisionByZero возвращается при делении на ноль.\nvar ErrDivisionByZero = errors.New(\"деление на ноль\")\n\n// Divide делит a на b и возвращает ошибку при b == 0.\nfunc Divide(a, b int) (int, error) {\n\t// TODO\n\treturn 0, nil\n}\n\nfunc main() {\n\tvalue, err := Divide(10, 2)\n\tfmt.Println(value, err)\n}\n",
+      "solution": "package main\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\n// ErrDivisionByZero возвращается при делении на ноль.\nvar ErrDivisionByZero = errors.New(\"деление на ноль\")\n\n// Divide делит a на b и возвращает ошибку при b == 0.\nfunc Divide(a, b int) (int, error) {\n\tif b == 0 {\n\t\treturn 0, ErrDivisionByZero\n\t}\n\treturn a / b, nil\n}\n\nfunc main() {\n\tvalue, err := Divide(10, 2)\n\tfmt.Println(value, err)\n}\n",
+      "hints": [
+        "Проверка b == 0 должна быть первой строкой функции.",
+        "При ошибке принято возвращать нулевое значение и ошибку вторым результатом.",
+        "Новая ошибка errors.New(\"деление на ноль\") НЕ равна ErrDivisionByZero: errors.Is её не найдёт."
+      ],
+      "tests": "package main\n\nimport (\n\t\"errors\"\n\t\"testing\"\n)\n\n// TestDivideOk делит без остатка.\nfunc TestDivideOk(t *testing.T) {\n\tgot, err := Divide(10, 2)\n\tif err != nil {\n\t\tt.Fatalf(\"ошибка: %v\", err)\n\t}\n\tif got != 5 {\n\t\tt.Fatalf(\"Divide = %d, ожидалось 5\", got)\n\t}\n}\n\n// TestDivideTruncates округляет вниз при целочисленном делении.\nfunc TestDivideTruncates(t *testing.T) {\n\tgot, err := Divide(7, 2)\n\tif err != nil || got != 3 {\n\t\tt.Fatalf(\"Divide = (%d, %v), ожидалось (3, nil)\", got, err)\n\t}\n}\n\n// TestDivideByZero возвращает ErrDivisionByZero.\nfunc TestDivideByZero(t *testing.T) {\n\tgot, err := Divide(1, 0)\n\tif !errors.Is(err, ErrDivisionByZero) {\n\t\tt.Fatalf(\"ошибка = %v, ожидалась ErrDivisionByZero\", err)\n\t}\n\tif got != 0 {\n\t\tt.Fatalf(\"при ошибке результат = %d, ожидалось 0\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "wrap-errors",
+      "module": "m07",
+      "title": "Оборачивание ошибок",
+      "summary": "Своя ошибка с Unwrap, errors.As и errors.Is.",
+      "difficulty": "medium",
+      "topics": [
+        "ошибки",
+        "errors.As",
+        "errors.Is"
+      ],
+      "minutes": 18,
+      "statement": "## Условие\n\nНужна функция загрузки пользователя, которая умеет объяснять причину ошибки.\n\n```go\nvar ErrNotFound = errors.New(\"пользователь не найден\")\n\ntype NotFoundError struct {\n\tID int\n}\n\nfunc (e *NotFoundError) Error() string\nfunc (e *NotFoundError) Unwrap() error // возвращает ErrNotFound\n\ntype User struct {\n\tID   int\n\tName string\n}\n\nfunc LoadUser(id int) (User, error)\n```\n\nПравила:\n\n- пользователь с `id > 0` «находится» и возвращается с именем `\"user-<id>\"`;\n- при `id <= 0` возвращается ошибка `*NotFoundError` с этим `id`;\n- `Error()` имеет вид `пользователь 0 не найден`;\n- `Unwrap()` возвращает `ErrNotFound`, чтобы работал `errors.Is`;\n- дополнительно оберните ошибку в `LoadUser` через `fmt.Errorf` с `%w` и текстом\n  `загрузить пользователя: ...`.\n\nБлагодаря такой цепочке проверяются оба условия: `errors.Is(err,\nErrNotFound)` и `errors.As(err, &notFound)`.\n",
+      "starter_code": "package main\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\n// ErrNotFound — общая причина: пользователя нет.\nvar ErrNotFound = errors.New(\"пользователь не найден\")\n\n// NotFoundError уточняет, какого пользователя не хватило.\ntype NotFoundError struct {\n\tID int\n}\n\n// Error реализует интерфейс error.\nfunc (e *NotFoundError) Error() string {\n\t// TODO: «пользователь <id> не найден»\n\treturn \"\"\n}\n\n// Unwrap связывает ошибку с ErrNotFound.\nfunc (e *NotFoundError) Unwrap() error {\n\t// TODO\n\treturn nil\n}\n\n// User — пользователь.\ntype User struct {\n\tID   int\n\tName string\n}\n\n// LoadUser возвращает пользователя или обёрнутую ошибку.\nfunc LoadUser(id int) (User, error) {\n\t// TODO: для id <= 0 верните fmt.Errorf(\"загрузить пользователя: %w\", &NotFoundError{ID: id})\n\treturn User{}, nil\n}\n\nfunc main() {\n\tuser, err := LoadUser(0)\n\tfmt.Println(user, err)\n}\n",
+      "solution": "package main\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\n// ErrNotFound — общая причина: пользователя нет.\nvar ErrNotFound = errors.New(\"пользователь не найден\")\n\n// NotFoundError уточняет, какого пользователя не хватило.\ntype NotFoundError struct {\n\tID int\n}\n\n// Error реализует интерфейс error.\nfunc (e *NotFoundError) Error() string {\n\treturn fmt.Sprintf(\"пользователь %d не найден\", e.ID)\n}\n\n// Unwrap связывает ошибку с ErrNotFound.\nfunc (e *NotFoundError) Unwrap() error {\n\treturn ErrNotFound\n}\n\n// User — пользователь.\ntype User struct {\n\tID   int\n\tName string\n}\n\n// LoadUser возвращает пользователя или обёрнутую ошибку.\nfunc LoadUser(id int) (User, error) {\n\tif id <= 0 {\n\t\treturn User{}, fmt.Errorf(\"загрузить пользователя: %w\", &NotFoundError{ID: id})\n\t}\n\treturn User{ID: id, Name: fmt.Sprintf(\"user-%d\", id)}, nil\n}\n\nfunc main() {\n\tuser, err := LoadUser(0)\n\tfmt.Println(user, err)\n}\n",
+      "hints": [
+        "Unwrap должен вернуть ErrNotFound, а не новую ошибку.",
+        "fmt.Errorf с %w сохраняет цепочку: errors.Is пройдёт до ErrNotFound, а errors.As найдёт *NotFoundError.",
+        "Для имени пользователя подойдёт fmt.Sprintf(\"user-%d\", id)."
+      ],
+      "tests": "package main\n\nimport (\n\t\"errors\"\n\t\"testing\"\n)\n\n// TestLoadUserFound возвращает пользователя.\nfunc TestLoadUserFound(t *testing.T) {\n\tuser, err := LoadUser(7)\n\tif err != nil {\n\t\tt.Fatalf(\"ошибка: %v\", err)\n\t}\n\tif user.ID != 7 || user.Name != \"user-7\" {\n\t\tt.Fatalf(\"пользователь = %+v\", user)\n\t}\n}\n\n// TestLoadUserIsNotFound проверяет цепочку через errors.Is.\nfunc TestLoadUserIsNotFound(t *testing.T) {\n\t_, err := LoadUser(0)\n\tif !errors.Is(err, ErrNotFound) {\n\t\tt.Fatalf(\"errors.Is(err, ErrNotFound) = false для %v\", err)\n\t}\n}\n\n// TestLoadUserAsNotFound достаёт конкретную ошибку через errors.As.\nfunc TestLoadUserAsNotFound(t *testing.T) {\n\t_, err := LoadUser(-3)\n\tvar notFound *NotFoundError\n\tif !errors.As(err, &notFound) {\n\t\tt.Fatalf(\"errors.As не нашёл *NotFoundError в %v\", err)\n\t}\n\tif notFound.ID != -3 {\n\t\tt.Fatalf(\"ID = %d, ожидалось -3\", notFound.ID)\n\t}\n}\n\n// TestNotFoundErrorMessage содержит идентификатор.\nfunc TestNotFoundErrorMessage(t *testing.T) {\n\t_, err := LoadUser(0)\n\tif err == nil || err.Error() != \"загрузить пользователя: пользователь 0 не найден\" {\n\t\tt.Fatalf(\"текст ошибки = %v\", err)\n\t}\n}\n"
+    },
+    {
+      "id": "json-user",
+      "module": "m08",
+      "title": "JSON пользователя",
+      "summary": "Теги структур, json.Marshal и обработка ошибки разбора.",
+      "difficulty": "medium",
+      "topics": [
+        "json",
+        "структуры",
+        "ошибки"
+      ],
+      "minutes": 15,
+      "statement": "## Условие\n\nОпишите пользователя и функции сериализации:\n\n```go\ntype User struct {\n\tID    int    `json:\"id\"`\n\tName  string `json:\"name\"`\n\tEmail string `json:\"email,omitempty\"`\n}\n\nfunc MarshalUser(user User) (string, error)\nfunc ParseUser(data string) (User, error)\n```\n\nТребования:\n\n- `MarshalUser` возвращает JSON вида `{\"id\":1,\"name\":\"Аня\"}`; поле `email`\n  отсутствует, если оно пустое (это делает `omitempty`);\n- `ParseUser` разбирает JSON обратно и возвращает ошибку, если строка невалидна.\n\nПорядок полей в JSON совпадает с порядком полей в структуре.\n",
+      "starter_code": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"fmt\"\n)\n\n// User — пользователь сервиса.\ntype User struct {\n\tID    int    `json:\"id\"`\n\tName  string `json:\"name\"`\n\tEmail string `json:\"email,omitempty\"`\n}\n\n// MarshalUser сериализует пользователя в JSON.\nfunc MarshalUser(user User) (string, error) {\n\t// TODO: json.Marshal + string(...)\n\t_ = json.Marshal\n\treturn \"\", nil\n}\n\n// ParseUser разбирает пользователя из JSON.\nfunc ParseUser(data string) (User, error) {\n\t// TODO: json.Unmarshal\n\treturn User{}, nil\n}\n\nfunc main() {\n\tdata, _ := MarshalUser(User{ID: 1, Name: \"Аня\"})\n\tfmt.Println(data)\n}\n",
+      "solution": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"fmt\"\n)\n\n// User — пользователь сервиса.\ntype User struct {\n\tID    int    `json:\"id\"`\n\tName  string `json:\"name\"`\n\tEmail string `json:\"email,omitempty\"`\n}\n\n// MarshalUser сериализует пользователя в JSON.\nfunc MarshalUser(user User) (string, error) {\n\traw, err := json.Marshal(user)\n\tif err != nil {\n\t\treturn \"\", err\n\t}\n\treturn string(raw), nil\n}\n\n// ParseUser разбирает пользователя из JSON.\nfunc ParseUser(data string) (User, error) {\n\tvar user User\n\tif err := json.Unmarshal([]byte(data), &user); err != nil {\n\t\treturn User{}, err\n\t}\n\treturn user, nil\n}\n\nfunc main() {\n\tdata, _ := MarshalUser(User{ID: 1, Name: \"Аня\"})\n\tfmt.Println(data)\n}\n",
+      "hints": [
+        "json.Marshal возвращает []byte, поэтому нужен string(raw).",
+        "json.Unmarshal принимает срез байтов и указатель на структуру.",
+        "Ошибку маршалинга не нужно заворачивать: верните её как есть."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestMarshalUser пишет JSON без пустого email.\nfunc TestMarshalUser(t *testing.T) {\n\tgot, err := MarshalUser(User{ID: 1, Name: \"Аня\"})\n\tif err != nil {\n\t\tt.Fatalf(\"ошибка: %v\", err)\n\t}\n\tif got != `{\"id\":1,\"name\":\"Аня\"}` {\n\t\tt.Fatalf(\"JSON = %s\", got)\n\t}\n}\n\n// TestMarshalUserWithEmail включает email, когда он задан.\nfunc TestMarshalUserWithEmail(t *testing.T) {\n\tgot, err := MarshalUser(User{ID: 2, Name: \"Борис\", Email: \"b@example.com\"})\n\tif err != nil {\n\t\tt.Fatalf(\"ошибка: %v\", err)\n\t}\n\tif got != `{\"id\":2,\"name\":\"Борис\",\"email\":\"b@example.com\"}` {\n\t\tt.Fatalf(\"JSON = %s\", got)\n\t}\n}\n\n// TestParseUser разбирает JSON в структуру.\nfunc TestParseUser(t *testing.T) {\n\tuser, err := ParseUser(`{\"id\":5,\"name\":\"Вера\",\"email\":\"v@example.com\"}`)\n\tif err != nil {\n\t\tt.Fatalf(\"ошибка: %v\", err)\n\t}\n\tif user.ID != 5 || user.Name != \"Вера\" || user.Email != \"v@example.com\" {\n\t\tt.Fatalf(\"пользователь = %+v\", user)\n\t}\n}\n\n// TestParseUserInvalid возвращает ошибку на битом JSON.\nfunc TestParseUserInvalid(t *testing.T) {\n\tif _, err := ParseUser(\"{id:5}\"); err == nil {\n\t\tt.Fatal(\"ожидалась ошибка разбора\")\n\t}\n}\n"
+    },
+    {
+      "id": "http-hello",
+      "module": "m12",
+      "title": "HTTP-обработчик приветствия",
+      "summary": "net/http, ServeMux, JSON-ответ и проверка через httptest.",
+      "difficulty": "medium",
+      "topics": [
+        "http",
+        "net/http",
+        "json"
+      ],
+      "minutes": 20,
+      "statement": "## Условие\n\nСоберите HTTP-роутер:\n\n```go\nfunc NewMux() *http.ServeMux\n```\n\nМаршруты:\n\n| Метод и путь | Ответ |\n| --- | --- |\n| `GET /ping` | просто текст `pong` |\n| `GET /hello` | JSON `{\"message\":\"Привет, <имя>!\"}` |\n\nИмя берётся из query-параметра `name`. Если параметра нет, используется `Мир`.\nЗаголовок `Content-Type` для JSON — `application/json; charset=utf-8`.\n\nПроверка вызывает ваш обработчик через `httptest.NewRecorder`, поэтому сервер\nзапускать не нужно.\n",
+      "starter_code": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"net/http\"\n)\n\n// NewMux собирает маршруты приложения.\nfunc NewMux() *http.ServeMux {\n\tmux := http.NewServeMux()\n\n\tmux.HandleFunc(\"/ping\", func(w http.ResponseWriter, r *http.Request) {\n\t\t// TODO: ответьте pong\n\t})\n\n\tmux.HandleFunc(\"/hello\", func(w http.ResponseWriter, r *http.Request) {\n\t\t// TODO: прочитайте name, задайте заголовок и запишите JSON\n\t})\n\n\treturn mux\n}\n\nfunc main() {\n\t_ = json.Marshal\n\thttp.ListenAndServe(\":8080\", NewMux())\n}\n",
+      "solution": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"net/http\"\n)\n\n// NewMux собирает маршруты приложения.\nfunc NewMux() *http.ServeMux {\n\tmux := http.NewServeMux()\n\n\tmux.HandleFunc(\"/ping\", func(w http.ResponseWriter, r *http.Request) {\n\t\tw.Write([]byte(\"pong\"))\n\t})\n\n\tmux.HandleFunc(\"/hello\", func(w http.ResponseWriter, r *http.Request) {\n\t\tname := r.URL.Query().Get(\"name\")\n\t\tif name == \"\" {\n\t\t\tname = \"Мир\"\n\t\t}\n\t\tw.Header().Set(\"Content-Type\", \"application/json; charset=utf-8\")\n\t\tjson.NewEncoder(w).Encode(map[string]string{\n\t\t\t\"message\": \"Привет, \" + name + \"!\",\n\t\t})\n\t})\n\n\treturn mux\n}\n\nfunc main() {\n\thttp.ListenAndServe(\":8080\", NewMux())\n}\n",
+      "hints": [
+        "r.URL.Query().Get(\"name\") читает query-параметр и возвращает пустую строку, если его нет.",
+        "Заголовок нужно установить до записи тела ответа.",
+        "json.NewEncoder(w).Encode(...) добавляет перевод строки в конце — это нормальный JSON."
+      ],
+      "tests": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"net/http\"\n\t\"net/http/httptest\"\n\t\"testing\"\n)\n\n// TestPing отвечает pong.\nfunc TestPing(t *testing.T) {\n\trecorder := httptest.NewRecorder()\n\tNewMux().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, \"/ping\", nil))\n\tif recorder.Code != http.StatusOK {\n\t\tt.Fatalf(\"код ответа = %d\", recorder.Code)\n\t}\n\tif recorder.Body.String() != \"pong\" {\n\t\tt.Fatalf(\"тело = %q, ожидалось pong\", recorder.Body.String())\n\t}\n}\n\n// TestHelloDefaultName подставляет имя по умолчанию.\nfunc TestHelloDefaultName(t *testing.T) {\n\trecorder := httptest.NewRecorder()\n\tNewMux().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, \"/hello\", nil))\n\n\tvar body map[string]string\n\tif err := json.NewDecoder(recorder.Body).Decode(&body); err != nil {\n\t\tt.Fatalf(\"ответ не JSON: %v\", err)\n\t}\n\tif body[\"message\"] != \"Привет, Мир!\" {\n\t\tt.Fatalf(\"message = %q\", body[\"message\"])\n\t}\n\tif got := recorder.Header().Get(\"Content-Type\"); got != \"application/json; charset=utf-8\" {\n\t\tt.Fatalf(\"Content-Type = %q\", got)\n\t}\n}\n\n// TestHelloWithName использует query-параметр.\nfunc TestHelloWithName(t *testing.T) {\n\trecorder := httptest.NewRecorder()\n\tNewMux().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, \"/hello?name=Go\", nil))\n\n\tvar body map[string]string\n\tif err := json.NewDecoder(recorder.Body).Decode(&body); err != nil {\n\t\tt.Fatalf(\"ответ не JSON: %v\", err)\n\t}\n\tif body[\"message\"] != \"Привет, Go!\" {\n\t\tt.Fatalf(\"message = %q\", body[\"message\"])\n\t}\n}\n"
+    },
+    {
+      "id": "mutex-counter",
+      "module": "m11",
+      "title": "Счётчик с мьютексом",
+      "summary": "Конкурентный доступ, sync.Mutex и общая структура.",
+      "difficulty": "medium",
+      "topics": [
+        "конкурентность",
+        "goroutines",
+        "sync"
+      ],
+      "minutes": 18,
+      "statement": "## Условие\n\nРеализуйте потокобезопасный счётчик:\n\n```go\ntype Counter struct {\n\tmu    sync.Mutex\n\tvalue int\n}\n\nfunc (c *Counter) Inc()\nfunc (c *Counter) Add(delta int)\nfunc (c *Counter) Value() int\n```\n\nПроверка запускает 100 горутин по 100 увеличений и ожидает `10000`. Без\nблокировки часть увеличений потеряется (состояние гонки).\n\nБлокировку нужно снимать через `defer c.mu.Unlock()` сразу после `Lock()`.\n",
+      "starter_code": "package main\n\nimport (\n\t\"fmt\"\n\t\"sync\"\n)\n\n// Counter — потокобезопасный счётчик.\ntype Counter struct {\n\tmu    sync.Mutex\n\tvalue int\n}\n\n// Inc увеличивает счётчик на единицу.\nfunc (c *Counter) Inc() {\n\t// TODO: заблокируйте мьютекс и увеличьте значение\n}\n\n// Add увеличивает счётчик на delta.\nfunc (c *Counter) Add(delta int) {\n\t// TODO\n}\n\n// Value возвращает текущее значение.\nfunc (c *Counter) Value() int {\n\t// TODO: читайте значение под блокировкой\n\treturn 0\n}\n\nfunc main() {\n\tvar counter Counter\n\tcounter.Inc()\n\tfmt.Println(counter.Value())\n}\n",
+      "solution": "package main\n\nimport (\n\t\"fmt\"\n\t\"sync\"\n)\n\n// Counter — потокобезопасный счётчик.\ntype Counter struct {\n\tmu    sync.Mutex\n\tvalue int\n}\n\n// Inc увеличивает счётчик на единицу.\nfunc (c *Counter) Inc() {\n\tc.Add(1)\n}\n\n// Add увеличивает счётчик на delta.\nfunc (c *Counter) Add(delta int) {\n\tc.mu.Lock()\n\tdefer c.mu.Unlock()\n\tc.value += delta\n}\n\n// Value возвращает текущее значение.\nfunc (c *Counter) Value() int {\n\tc.mu.Lock()\n\tdefer c.mu.Unlock()\n\treturn c.value\n}\n\nfunc main() {\n\tvar counter Counter\n\tcounter.Inc()\n\tfmt.Println(counter.Value())\n}\n",
+      "hints": [
+        "c.mu.Lock() перед изменением, c.mu.Unlock() через defer.",
+        "Value тоже должен брать блокировку: чтение во время записи — та же гонка.",
+        "Inc можно выразить через Add(1), чтобы не дублировать блокировку."
+      ],
+      "tests": "package main\n\nimport (\n\t\"sync\"\n\t\"testing\"\n)\n\n// TestCounterSingleThreaded считает последовательно.\nfunc TestCounterSingleThreaded(t *testing.T) {\n\tvar counter Counter\n\tcounter.Inc()\n\tcounter.Add(5)\n\tif got := counter.Value(); got != 6 {\n\t\tt.Fatalf(\"Value = %d, ожидалось 6\", got)\n\t}\n}\n\n// TestCounterConcurrent не теряет увеличения из горутин.\nfunc TestCounterConcurrent(t *testing.T) {\n\tvar counter Counter\n\tvar wait sync.WaitGroup\n\tfor worker := 0; worker < 100; worker++ {\n\t\twait.Add(1)\n\t\tgo func() {\n\t\t\tdefer wait.Done()\n\t\t\tfor i := 0; i < 100; i++ {\n\t\t\t\tcounter.Inc()\n\t\t\t}\n\t\t}()\n\t}\n\twait.Wait()\n\tif got := counter.Value(); got != 10000 {\n\t\tt.Fatalf(\"Value = %d, ожидалось 10000: не хватает блокировки\", got)\n\t}\n}\n\n// TestCounterAddConcurrent складывает разные приращения.\nfunc TestCounterAddConcurrent(t *testing.T) {\n\tvar counter Counter\n\tvar wait sync.WaitGroup\n\tfor worker := 0; worker < 50; worker++ {\n\t\twait.Add(1)\n\t\tgo func() {\n\t\t\tdefer wait.Done()\n\t\t\tcounter.Add(2)\n\t\t}()\n\t}\n\twait.Wait()\n\tif got := counter.Value(); got != 100 {\n\t\tt.Fatalf(\"Value = %d, ожидалось 100\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "worker-pool",
+      "module": "m11",
+      "title": "Пул воркеров",
+      "summary": "Горутины, каналы и WaitGroup на реальной задаче.",
+      "difficulty": "hard",
+      "topics": [
+        "конкурентность",
+        "goroutines",
+        "channels",
+        "sync"
+      ],
+      "minutes": 30,
+      "statement": "## Условие\n\nРеализуйте параллельное суммирование:\n\n```go\nfunc SumWorkers(nums []int, workers int) int\n```\n\nФункция должна:\n\n1. разделить срез между `workers` горутинами (каждая считает свою часть);\n2. собрать частичные суммы и вернуть общую;\n3. если `workers < 1`, использовать одного воркера;\n4. если `workers` больше длины среза, лишние горутины просто ничего не делают;\n5. для пустого среза вернуть `0`.\n\nРезультат обязан совпадать с обычной суммой при любом числе воркеров — именно\nэто и проверяется. Дополнительно проверяется, что функция не паникует на\nкраевых значениях.\n\n## Идея решения\n\nКанал с заданиями и канал с результатами:\n\n```\nиндексы → [worker] → частичные суммы → сумма\n```\n\nЗакрывать канал результатов должен тот, кто завершил все горутины, иначе\nполучите панику «send on closed channel».\n",
+      "starter_code": "package main\n\nimport (\n\t\"fmt\"\n\t\"sync\"\n)\n\n// SumWorkers складывает числа, распределив работу между воркерами.\nfunc SumWorkers(nums []int, workers int) int {\n\t// TODO: раздайте индексы через канал, соберите частичные суммы\n\t_ = sync.WaitGroup{}\n\treturn 0\n}\n\nfunc main() {\n\tfmt.Println(SumWorkers([]int{1, 2, 3, 4, 5}, 3))\n}\n",
+      "solution": "package main\n\nimport (\n\t\"fmt\"\n\t\"sync\"\n)\n\n// SumWorkers складывает числа, распределив работу между воркерами.\nfunc SumWorkers(nums []int, workers int) int {\n\tif len(nums) == 0 {\n\t\treturn 0\n\t}\n\tif workers < 1 {\n\t\tworkers = 1\n\t}\n\tif workers > len(nums) {\n\t\tworkers = len(nums)\n\t}\n\n\tjobs := make(chan int)\n\tresults := make(chan int, workers)\n\n\tvar wait sync.WaitGroup\n\twait.Add(workers)\n\tfor worker := 0; worker < workers; worker++ {\n\t\tgo func() {\n\t\t\tdefer wait.Done()\n\t\t\tpartial := 0\n\t\t\tfor index := range jobs {\n\t\t\t\tpartial += nums[index]\n\t\t\t}\n\t\t\tresults <- partial\n\t\t}()\n\t}\n\n\tgo func() {\n\t\tfor index := range nums {\n\t\t\tjobs <- index\n\t\t}\n\t\tclose(jobs)\n\t}()\n\n\tgo func() {\n\t\twait.Wait()\n\t\tclose(results)\n\t}()\n\n\ttotal := 0\n\tfor partial := range results {\n\t\ttotal += partial\n\t}\n\treturn total\n}\n\nfunc main() {\n\tfmt.Println(SumWorkers([]int{1, 2, 3, 4, 5}, 3))\n}\n",
+      "hints": [
+        "Срез nums можно читать из всех горутин без блокировки — он не меняется.",
+        "Отправляйте в канал заданий индексы, а не значения: так проще считать частичные суммы.",
+        "Закрытие канала результатов делайте в отдельной горутине после wait.Wait().",
+        "Не забудьте про case с пустым срезом, иначе сумма останется нулём, но тесты проверят и это."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestSumWorkersSmall складывает короткий срез.\nfunc TestSumWorkersSmall(t *testing.T) {\n\tif got := SumWorkers([]int{1, 2, 3, 4, 5}, 3); got != 15 {\n\t\tt.Fatalf(\"SumWorkers = %d, ожидалось 15\", got)\n\t}\n}\n\n// TestSumWorkersSingleWorker работает с одним воркером.\nfunc TestSumWorkersSingleWorker(t *testing.T) {\n\tif got := SumWorkers([]int{-5, 10, 2}, 1); got != 7 {\n\t\tt.Fatalf(\"SumWorkers = %d, ожидалось 7\", got)\n\t}\n}\n\n// TestSumWorkersMoreWorkersThanItems не паникует.\nfunc TestSumWorkersMoreWorkersThanItems(t *testing.T) {\n\tif got := SumWorkers([]int{1, 2}, 8); got != 3 {\n\t\tt.Fatalf(\"SumWorkers = %d, ожидалось 3\", got)\n\t}\n}\n\n// TestSumWorkersBadWorkersCount терпит workers <= 0.\nfunc TestSumWorkersBadWorkersCount(t *testing.T) {\n\tif got := SumWorkers([]int{4, 5}, 0); got != 9 {\n\t\tt.Fatalf(\"SumWorkers = %d, ожидалось 9\", got)\n\t}\n}\n\n// TestSumWorkersEmpty возвращает ноль.\nfunc TestSumWorkersEmpty(t *testing.T) {\n\tif got := SumWorkers(nil, 4); got != 0 {\n\t\tt.Fatalf(\"SumWorkers(nil) = %d, ожидалось 0\", got)\n\t}\n}\n\n// TestSumWorkersLarge сверяет результат на большом срезе.\nfunc TestSumWorkersLarge(t *testing.T) {\n\tnums := make([]int, 10000)\n\tfor i := range nums {\n\t\tnums[i] = i % 7\n\t}\n\twant := 0\n\tfor _, value := range nums {\n\t\twant += value\n\t}\n\tif got := SumWorkers(nums, 7); got != want {\n\t\tt.Fatalf(\"SumWorkers = %d, ожидалось %d\", got, want)\n\t}\n}\n"
+    },
+    {
+      "id": "lru-cache",
+      "module": "m13",
+      "title": "LRU-кэш",
+      "summary": "Map, порядок использования и вытеснение записей.",
+      "difficulty": "hard",
+      "topics": [
+        "map",
+        "алгоритмы",
+        "структуры"
+      ],
+      "minutes": 30,
+      "statement": "## Условие\n\nРеализуйте кэш с вытеснением давно использованных записей:\n\n```go\ntype LRU struct {\n\tcapacity int\n\tvalues   map[string]int\n\torder    []string // от самого давнего к самому свежему\n}\n\nfunc NewLRU(capacity int) *LRU\nfunc (c *LRU) Get(key string) (int, bool)\nfunc (c *LRU) Put(key string, value int)\nfunc (c *LRU) Len() int\n```\n\nПравила:\n\n- `capacity < 1` заменяется на `1`;\n- `Get` для существующего ключа делает его самым свежим;\n- `Put` для существующего ключа обновляет значение и делает ключ свежим;\n- при переполнении вытесняется самый давний ключ (`order[0]`).\n\n`Get` для отсутствующего ключа возвращает `0, false` и ничего не меняет.\n\n## Подсказка\n\nДля перемещения ключа в конец среза удобна функция, которая удаляет элемент по\nиндексу (`append(s[:i], s[i+1:]...)`) и добавляет его в конец.\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// LRU — кэш с вытеснением давно использованных записей.\ntype LRU struct {\n\tcapacity int\n\tvalues   map[string]int\n\torder    []string\n}\n\n// NewLRU создаёт кэш заданной ёмкости.\nfunc NewLRU(capacity int) *LRU {\n\t// TODO: исправьте capacity < 1 и создайте map\n\treturn &LRU{capacity: capacity, values: map[string]int{}}\n}\n\n// Get возвращает значение и признак наличия.\nfunc (c *LRU) Get(key string) (int, bool) {\n\t// TODO\n\treturn 0, false\n}\n\n// Put добавляет или обновляет значение.\nfunc (c *LRU) Put(key string, value int) {\n\t// TODO\n}\n\n// Len возвращает количество записей.\nfunc (c *LRU) Len() int {\n\treturn len(c.values)\n}\n\nfunc main() {\n\tcache := NewLRU(2)\n\tcache.Put(\"a\", 1)\n\tvalue, _ := cache.Get(\"a\")\n\tfmt.Println(value)\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// LRU — кэш с вытеснением давно использованных записей.\ntype LRU struct {\n\tcapacity int\n\tvalues   map[string]int\n\torder    []string\n}\n\n// NewLRU создаёт кэш заданной ёмкости.\nfunc NewLRU(capacity int) *LRU {\n\tif capacity < 1 {\n\t\tcapacity = 1\n\t}\n\treturn &LRU{capacity: capacity, values: make(map[string]int, capacity)}\n}\n\n// touch перемещает ключ в конец order: он становится самым свежим.\nfunc (c *LRU) touch(key string) {\n\tfor index, existing := range c.order {\n\t\tif existing == key {\n\t\t\tc.order = append(c.order[:index], c.order[index+1:]...)\n\t\t\tbreak\n\t\t}\n\t}\n\tc.order = append(c.order, key)\n}\n\n// Get возвращает значение и признак наличия.\nfunc (c *LRU) Get(key string) (int, bool) {\n\tvalue, ok := c.values[key]\n\tif !ok {\n\t\treturn 0, false\n\t}\n\tc.touch(key)\n\treturn value, true\n}\n\n// Put добавляет или обновляет значение.\nfunc (c *LRU) Put(key string, value int) {\n\tif _, exists := c.values[key]; exists {\n\t\tc.values[key] = value\n\t\tc.touch(key)\n\t\treturn\n\t}\n\tif len(c.values) >= c.capacity {\n\t\toldest := c.order[0]\n\t\tc.order = c.order[1:]\n\t\tdelete(c.values, oldest)\n\t}\n\tc.values[key] = value\n\tc.order = append(c.order, key)\n}\n\n// Len возвращает количество записей.\nfunc (c *LRU) Len() int {\n\treturn len(c.values)\n}\n\nfunc main() {\n\tcache := NewLRU(2)\n\tcache.Put(\"a\", 1)\n\tvalue, _ := cache.Get(\"a\")\n\tfmt.Println(value)\n}\n",
+      "hints": [
+        "Храните порядок в срезе order: конец — самая свежая запись.",
+        "При Get найденный ключ нужно переместить в конец, иначе вытеснение будет неверным.",
+        "Перед вставкой новой записи проверьте len(c.values) >= c.capacity.",
+        "После delete(c.values, oldest) не забудьте удалить ключ из order."
+      ],
+      "tests": "package main\n\nimport \"testing\"\n\n// TestLRUEvictsOldest вытесняет самую давнюю запись.\nfunc TestLRUEvictsOldest(t *testing.T) {\n\tcache := NewLRU(2)\n\tcache.Put(\"a\", 1)\n\tcache.Put(\"b\", 2)\n\tcache.Put(\"c\", 3)\n\n\tif _, ok := cache.Get(\"a\"); ok {\n\t\tt.Fatal(\"a должна быть вытеснена\")\n\t}\n\tif value, ok := cache.Get(\"b\"); !ok || value != 2 {\n\t\tt.Fatalf(\"b = (%d, %v)\", value, ok)\n\t}\n\tif cache.Len() != 2 {\n\t\tt.Fatalf(\"Len = %d, ожидалось 2\", cache.Len())\n\t}\n}\n\n// TestLRUGetRefreshesOrder обновляет порядок при чтении.\nfunc TestLRUGetRefreshesOrder(t *testing.T) {\n\tcache := NewLRU(2)\n\tcache.Put(\"a\", 1)\n\tcache.Put(\"b\", 2)\n\tcache.Get(\"a\")   // a становится свежей\n\tcache.Put(\"c\", 3) // теперь должна вытесниться b\n\n\tif _, ok := cache.Get(\"b\"); ok {\n\t\tt.Fatal(\"b должна быть вытеснена после Get(\\\"a\\\")\")\n\t}\n\tif value, ok := cache.Get(\"a\"); !ok || value != 1 {\n\t\tt.Fatalf(\"a = (%d, %v)\", value, ok)\n\t}\n}\n\n// TestLRUUpdateExisting обновляет значение без вытеснения.\nfunc TestLRUUpdateExisting(t *testing.T) {\n\tcache := NewLRU(2)\n\tcache.Put(\"a\", 1)\n\tcache.Put(\"b\", 2)\n\tcache.Put(\"a\", 10)\n\n\tif cache.Len() != 2 {\n\t\tt.Fatalf(\"Len = %d, ожидалось 2\", cache.Len())\n\t}\n\tif value, _ := cache.Get(\"a\"); value != 10 {\n\t\tt.Fatalf(\"a = %d, ожидалось 10\", value)\n\t}\n}\n\n// TestLRUMissingKey возвращает false.\nfunc TestLRUMissingKey(t *testing.T) {\n\tcache := NewLRU(1)\n\tif value, ok := cache.Get(\"nope\"); ok || value != 0 {\n\t\tt.Fatalf(\"Get = (%d, %v)\", value, ok)\n\t}\n}\n\n// TestLRUCapacityGuard заменяет нулевую ёмкость на единицу.\nfunc TestLRUCapacityGuard(t *testing.T) {\n\tcache := NewLRU(0)\n\tcache.Put(\"a\", 1)\n\tcache.Put(\"b\", 2)\n\tif cache.Len() != 1 {\n\t\tt.Fatalf(\"Len = %d, ожидалось 1\", cache.Len())\n\t}\n\tif _, ok := cache.Get(\"b\"); !ok {\n\t\tt.Fatal(\"b должна остаться\")\n\t}\n}\n"
+    },
+    {
+      "id": "error-join",
+      "module": "m07",
+      "title": "Несколько ошибок сразу",
+      "summary": "errors.Join, errors.As и собственный тип ошибки с полем.",
+      "difficulty": "hard",
+      "topics": [
+        "ошибки",
+        "errors.Join",
+        "errors.As"
+      ],
+      "minutes": 25,
+      "statement": "## Условие\n\nВалидация формы может найти несколько проблем одновременно. Реализуйте:\n\n```go\nvar ErrInvalidAge = errors.New(\"некорректный возраст\")\nvar ErrInvalidEmail = errors.New(\"некорректный email\")\n\ntype FieldError struct {\n\tField string\n\tErr   error\n}\n\nfunc (e *FieldError) Error() string // \"<field>: <err>\"\nfunc (e *FieldError) Unwrap() error // возвращает e.Err\n\nfunc Validate(age int, email string) error\n```\n\nПравила:\n\n- возраст должен быть от 0 до 150 включительно, иначе `FieldError{Field: \"age\",\n  Err: ErrInvalidAge}`;\n- email должен содержать `@`, иначе `FieldError{Field: \"email\", Err:\n  ErrInvalidEmail}`;\n- если ошибок несколько, объедините их через `errors.Join`;\n- если ошибок нет, верните `nil`.\n\nПроверка использует и `errors.Is` (для причины), и `errors.As` (для поля).\n",
+      "starter_code": "package main\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n\t\"strings\"\n)\n\n// Причины ошибок валидации.\nvar (\n\tErrInvalidAge   = errors.New(\"некорректный возраст\")\n\tErrInvalidEmail = errors.New(\"некорректный email\")\n)\n\n// FieldError привязывает ошибку к полю формы.\ntype FieldError struct {\n\tField string\n\tErr   error\n}\n\n// Error реализует интерфейс error.\nfunc (e *FieldError) Error() string {\n\t// TODO: «поле: причина»\n\treturn \"\"\n}\n\n// Unwrap возвращает исходную причину.\nfunc (e *FieldError) Unwrap() error {\n\t// TODO\n\treturn nil\n}\n\n// Validate проверяет возраст и email.\nfunc Validate(age int, email string) error {\n\t// TODO: соберите ошибки и объедините их errors.Join\n\t_ = strings.Contains\n\treturn nil\n}\n\nfunc main() {\n\tfmt.Println(Validate(-1, \"нет-собаки\"))\n}\n",
+      "solution": "package main\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n\t\"strings\"\n)\n\n// Причины ошибок валидации.\nvar (\n\tErrInvalidAge   = errors.New(\"некорректный возраст\")\n\tErrInvalidEmail = errors.New(\"некорректный email\")\n)\n\n// FieldError привязывает ошибку к полю формы.\ntype FieldError struct {\n\tField string\n\tErr   error\n}\n\n// Error реализует интерфейс error.\nfunc (e *FieldError) Error() string {\n\treturn e.Field + \": \" + e.Err.Error()\n}\n\n// Unwrap возвращает исходную причину.\nfunc (e *FieldError) Unwrap() error {\n\treturn e.Err\n}\n\n// Validate проверяет возраст и email.\nfunc Validate(age int, email string) error {\n\tvar problems []error\n\tif age < 0 || age > 150 {\n\t\tproblems = append(problems, &FieldError{Field: \"age\", Err: ErrInvalidAge})\n\t}\n\tif !strings.Contains(email, \"@\") {\n\t\tproblems = append(problems, &FieldError{Field: \"email\", Err: ErrInvalidEmail})\n\t}\n\treturn errors.Join(problems...)\n}\n\nfunc main() {\n\tfmt.Println(Validate(-1, \"нет-собаки\"))\n}\n",
+      "hints": [
+        "errors.Join(nil) возвращает nil — отдельная проверка «ошибок нет» не обязательна.",
+        "Собирайте ошибки в срез []error и передайте его в errors.Join(problems...).",
+        "Unwrap должен возвращать e.Err, иначе errors.Is не доберётся до ErrInvalidAge.",
+        "Обратите внимание: errors.As ищет первую подходящую ошибку в цепочке, поэтому проверяйте поле через найденный *FieldError."
+      ],
+      "tests": "package main\n\nimport (\n\t\"errors\"\n\t\"strings\"\n\t\"testing\"\n)\n\n// TestValidateOk не находит проблем.\nfunc TestValidateOk(t *testing.T) {\n\tif err := Validate(30, \"go@example.com\"); err != nil {\n\t\tt.Fatalf(\"ошибка: %v\", err)\n\t}\n}\n\n// TestValidateAgeIsInvalid проверяет ошибку возраста.\nfunc TestValidateAgeIsInvalid(t *testing.T) {\n\terr := Validate(200, \"go@example.com\")\n\tif !errors.Is(err, ErrInvalidAge) {\n\t\tt.Fatalf(\"errors.Is(ErrInvalidAge) = false для %v\", err)\n\t}\n\tvar fieldErr *FieldError\n\tif !errors.As(err, &fieldErr) || fieldErr.Field != \"age\" {\n\t\tt.Fatalf(\"ошибка поля = %#v\", fieldErr)\n\t}\n}\n\n// TestValidateEmailIsInvalid проверяет ошибку email.\nfunc TestValidateEmailIsInvalid(t *testing.T) {\n\terr := Validate(18, \"нет-собаки\")\n\tif !errors.Is(err, ErrInvalidEmail) {\n\t\tt.Fatalf(\"errors.Is(ErrInvalidEmail) = false для %v\", err)\n\t}\n\tif !strings.Contains(err.Error(), \"email\") {\n\t\tt.Fatalf(\"текст ошибки = %q\", err.Error())\n\t}\n}\n\n// TestValidateBothProblems объединяет две ошибки.\nfunc TestValidateBothProblems(t *testing.T) {\n\terr := Validate(-1, \"нет-собаки\")\n\tif !errors.Is(err, ErrInvalidAge) || !errors.Is(err, ErrInvalidEmail) {\n\t\tt.Fatalf(\"ожидались обе причины, получено %v\", err)\n\t}\n}\n\n// TestValidateBoundaries принимает крайние допустимые значения.\nfunc TestValidateBoundaries(t *testing.T) {\n\tfor _, age := range []int{0, 150} {\n\t\tif err := Validate(age, \"a@b\"); err != nil {\n\t\t\tt.Fatalf(\"возраст %d должен быть допустим: %v\", age, err)\n\t\t}\n\t}\n\tif err := Validate(151, \"a@b\"); !errors.Is(err, ErrInvalidAge) {\n\t\tt.Fatalf(\"151 должен быть недопустим: %v\", err)\n\t}\n}\n"
+    },
+    {
+      "id": "csv-stats",
+      "module": "m08",
+      "title": "Разбор CSV и средний балл",
+      "summary": "encoding/csv, strconv и аккуратная обработка битых строк.",
+      "difficulty": "hard",
+      "topics": [
+        "csv",
+        "файлы",
+        "ошибки",
+        "strconv"
+      ],
+      "minutes": 30,
+      "statement": "## Условие\n\nДан CSV-текст с первой строкой-заголовком:\n\n```\nname,score\nАня,90\nБорис,75\n```\n\nРеализуйте:\n\n```go\ntype Record struct {\n\tName  string\n\tScore int\n}\n\nfunc ParseCSV(data string) ([]Record, error)\nfunc AverageScore(records []Record) float64\n```\n\nТребования:\n\n- заголовок пропускается;\n- пустые строки игнорируются;\n- если строка содержит не две колонки или балл не число, возвращается ошибка\n  с номером строки (например, `строка 3: неверный балл`);\n- `AverageScore` для пустого среза возвращает `0`.\n\nРазбор делайте через `encoding/csv` — он корректно обрабатывает кавычки.\n`csv.Reader` уже умеет пропускать пустые строки.\n",
+      "starter_code": "package main\n\nimport (\n\t\"encoding/csv\"\n\t\"fmt\"\n\t\"strconv\"\n\t\"strings\"\n)\n\n// Record — одна строка с данными.\ntype Record struct {\n\tName  string\n\tScore int\n}\n\n// ParseCSV разбирает CSV с заголовком name,score.\nfunc ParseCSV(data string) ([]Record, error) {\n\t// TODO: прочитайте заголовок, затем строки; проверьте число колонок и балл\n\t_ = csv.NewReader\n\t_ = strconv.Atoi\n\t_ = strings.TrimSpace\n\treturn nil, nil\n}\n\n// AverageScore считает средний балл.\nfunc AverageScore(records []Record) float64 {\n\t// TODO\n\treturn 0\n}\n\nfunc main() {\n\trecords, _ := ParseCSV(\"name,score\\nАня,90\\nБорис,80\\n\")\n\tfmt.Println(AverageScore(records))\n}\n",
+      "solution": "package main\n\nimport (\n\t\"encoding/csv\"\n\t\"fmt\"\n\t\"strconv\"\n\t\"strings\"\n)\n\n// Record — одна строка с данными.\ntype Record struct {\n\tName  string\n\tScore int\n}\n\n// ParseCSV разбирает CSV с заголовком name,score.\nfunc ParseCSV(data string) ([]Record, error) {\n\treader := csv.NewReader(strings.NewReader(data))\n\treader.FieldsPerRecord = -1\n\trows, err := reader.ReadAll()\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tif len(rows) == 0 {\n\t\treturn []Record{}, nil\n\t}\n\n\trecords := make([]Record, 0, len(rows)-1)\n\tfor index, row := range rows[1:] {\n\t\tlineNumber := index + 2\n\t\tif len(row) == 1 && strings.TrimSpace(row[0]) == \"\" {\n\t\t\tcontinue\n\t\t}\n\t\tif len(row) != 2 {\n\t\t\treturn nil, fmt.Errorf(\"строка %d: ожидалось 2 колонки, получено %d\", lineNumber, len(row))\n\t\t}\n\t\tscore, convErr := strconv.Atoi(strings.TrimSpace(row[1]))\n\t\tif convErr != nil {\n\t\t\treturn nil, fmt.Errorf(\"строка %d: неверный балл %q\", lineNumber, row[1])\n\t\t}\n\t\trecords = append(records, Record{Name: strings.TrimSpace(row[0]), Score: score})\n\t}\n\treturn records, nil\n}\n\n// AverageScore считает средний балл.\nfunc AverageScore(records []Record) float64 {\n\tif len(records) == 0 {\n\t\treturn 0\n\t}\n\ttotal := 0\n\tfor _, record := range records {\n\t\ttotal += record.Score\n\t}\n\treturn float64(total) / float64(len(records))\n}\n\nfunc main() {\n\trecords, _ := ParseCSV(\"name,score\\nАня,90\\nБорис,80\\n\")\n\tfmt.Println(AverageScore(records))\n}\n",
+      "hints": [
+        "reader.ReadAll() возвращает [][]string — первая строка это заголовок.",
+        "FieldsPerRecord = -1 отключает проверку одинакового числа колонок: её делает ваш код с понятным сообщением.",
+        "Номер строки в файле = индекс в rows[1:] + 2.",
+        "strconv.Atoi возвращает ошибку для \"90.5\" — балл должен быть целым."
+      ],
+      "tests": "package main\n\nimport (\n\t\"math\"\n\t\"strings\"\n\t\"testing\"\n)\n\n// TestParseCSVBasic разбирает корректный файл.\nfunc TestParseCSVBasic(t *testing.T) {\n\trecords, err := ParseCSV(\"name,score\\nАня,90\\nБорис,80\\n\")\n\tif err != nil {\n\t\tt.Fatalf(\"ошибка: %v\", err)\n\t}\n\tif len(records) != 2 {\n\t\tt.Fatalf(\"строк = %d, ожидалось 2\", len(records))\n\t}\n\tif records[0].Name != \"Аня\" || records[0].Score != 90 {\n\t\tt.Fatalf(\"первая запись = %+v\", records[0])\n\t}\n}\n\n// TestParseCSVQuoted разбирает имя в кавычках с запятой.\nfunc TestParseCSVQuoted(t *testing.T) {\n\trecords, err := ParseCSV(\"name,score\\n\\\"Иванов, Пётр\\\",70\\n\")\n\tif err != nil {\n\t\tt.Fatalf(\"ошибка: %v\", err)\n\t}\n\tif len(records) != 1 || records[0].Name != \"Иванов, Пётр\" || records[0].Score != 70 {\n\t\tt.Fatalf(\"записи = %+v\", records)\n\t}\n}\n\n// TestParseCSVBadScore возвращает ошибку с номером строки.\nfunc TestParseCSVBadScore(t *testing.T) {\n\t_, err := ParseCSV(\"name,score\\nАня,90\\nБорис,отлично\\n\")\n\tif err == nil {\n\t\tt.Fatal(\"ожидалась ошибка\")\n\t}\n\tif !strings.Contains(err.Error(), \"3\") {\n\t\tt.Fatalf(\"в ошибке нет номера строки: %v\", err)\n\t}\n}\n\n// TestParseCSVWrongColumns отвергает лишнюю колонку.\nfunc TestParseCSVWrongColumns(t *testing.T) {\n\tif _, err := ParseCSV(\"name,score\\nАня,90,лишнее\\n\"); err == nil {\n\t\tt.Fatal(\"ожидалась ошибка о числе колонок\")\n\t}\n}\n\n// TestAverageScore считает среднее.\nfunc TestAverageScore(t *testing.T) {\n\trecords := []Record{{Name: \"Аня\", Score: 90}, {Name: \"Борис\", Score: 80}}\n\tif got := AverageScore(records); math.Abs(got-85) > 1e-9 {\n\t\tt.Fatalf(\"AverageScore = %v, ожидалось 85\", got)\n\t}\n}\n\n// TestAverageScoreEmpty возвращает ноль.\nfunc TestAverageScoreEmpty(t *testing.T) {\n\tif got := AverageScore(nil); got != 0 {\n\t\tt.Fatalf(\"AverageScore(nil) = %v\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "generic-helpers",
+      "module": "m13",
+      "title": "Обобщённые Map, Filter и Reduce",
+      "summary": "Дженерики: параметры типов, ограничения comparable и any.",
+      "difficulty": "hard",
+      "topics": [
+        "generics",
+        "срезы",
+        "функции"
+      ],
+      "minutes": 25,
+      "statement": "## Условие\n\nРеализуйте обобщённые функции:\n\n```go\nfunc Map[T, R any](items []T, convert func(T) R) []R\nfunc Filter[T any](items []T, keep func(T) bool) []T\nfunc Reduce[T, A any](items []T, initial A, combine func(A, T) A) A\nfunc Unique[T comparable](items []T) []T\n```\n\nТребования:\n\n- `Map` сохраняет порядок и длину;\n- `Filter` сохраняет порядок;\n- `Reduce` начинает с `initial`;\n- `Unique` убирает повторы, сохраняя первое появление; для этого типа нужен\n  ограничение `comparable`.\n\nФункции должны работать с любыми типами: числами, строками и структурами.\n",
+      "starter_code": "package main\n\nimport \"fmt\"\n\n// Map применяет convert к каждому элементу.\nfunc Map[T, R any](items []T, convert func(T) R) []R {\n\t// TODO\n\treturn nil\n}\n\n// Filter оставляет элементы, для которых keep вернул true.\nfunc Filter[T any](items []T, keep func(T) bool) []T {\n\t// TODO\n\treturn nil\n}\n\n// Reduce сворачивает срез в одно значение.\nfunc Reduce[T, A any](items []T, initial A, combine func(A, T) A) A {\n\t// TODO\n\treturn initial\n}\n\n// Unique убирает повторы, сохраняя порядок.\nfunc Unique[T comparable](items []T) []T {\n\t// TODO\n\treturn nil\n}\n\nfunc main() {\n\tfmt.Println(Map([]int{1, 2, 3}, func(value int) int { return value * 2 }))\n}\n",
+      "solution": "package main\n\nimport \"fmt\"\n\n// Map применяет convert к каждому элементу.\nfunc Map[T, R any](items []T, convert func(T) R) []R {\n\tresult := make([]R, 0, len(items))\n\tfor _, item := range items {\n\t\tresult = append(result, convert(item))\n\t}\n\treturn result\n}\n\n// Filter оставляет элементы, для которых keep вернул true.\nfunc Filter[T any](items []T, keep func(T) bool) []T {\n\tresult := make([]T, 0, len(items))\n\tfor _, item := range items {\n\t\tif keep(item) {\n\t\t\tresult = append(result, item)\n\t\t}\n\t}\n\treturn result\n}\n\n// Reduce сворачивает срез в одно значение.\nfunc Reduce[T, A any](items []T, initial A, combine func(A, T) A) A {\n\taccumulator := initial\n\tfor _, item := range items {\n\t\taccumulator = combine(accumulator, item)\n\t}\n\treturn accumulator\n}\n\n// Unique убирает повторы, сохраняя порядок.\nfunc Unique[T comparable](items []T) []T {\n\tseen := make(map[T]bool, len(items))\n\tresult := make([]T, 0, len(items))\n\tfor _, item := range items {\n\t\tif seen[item] {\n\t\t\tcontinue\n\t\t}\n\t\tseen[item] = true\n\t\tresult = append(result, item)\n\t}\n\treturn result\n}\n\nfunc main() {\n\tfmt.Println(Map([]int{1, 2, 3}, func(value int) int { return value * 2 }))\n}\n",
+      "hints": [
+        "Параметры типов объявляются в квадратных скобках до аргументов функции.",
+        "Для Map нужны два параметра: T (вход) и R (выход).",
+        "Map для ключей требует comparable, any этого не гарантирует.",
+        "make([]R, 0, len(items)) задаёт ёмкость и избегает лишних перевыделений."
+      ],
+      "tests": "package main\n\nimport (\n\t\"reflect\"\n\t\"testing\"\n)\n\n// TestMapDoubles удваивает числа.\nfunc TestMapDoubles(t *testing.T) {\n\tgot := Map([]int{1, 2, 3}, func(value int) int { return value * 2 })\n\tif !reflect.DeepEqual(got, []int{2, 4, 6}) {\n\t\tt.Fatalf(\"Map = %v\", got)\n\t}\n}\n\n// TestMapChangesType превращает числа в строки.\nfunc TestMapChangesType(t *testing.T) {\n\tgot := Map([]string{\"go\", \"ру\"}, func(value string) int { return len([]rune(value)) })\n\tif !reflect.DeepEqual(got, []int{2, 2}) {\n\t\tt.Fatalf(\"Map = %v\", got)\n\t}\n}\n\n// TestFilterEven оставляет чётные числа.\nfunc TestFilterEven(t *testing.T) {\n\tgot := Filter([]int{1, 2, 3, 4}, func(value int) bool { return value%2 == 0 })\n\tif !reflect.DeepEqual(got, []int{2, 4}) {\n\t\tt.Fatalf(\"Filter = %v\", got)\n\t}\n}\n\n// TestReduceSum считает сумму.\nfunc TestReduceSum(t *testing.T) {\n\tgot := Reduce([]int{1, 2, 3}, 0, func(sum, value int) int { return sum + value })\n\tif got != 6 {\n\t\tt.Fatalf(\"Reduce = %d, ожидалось 6\", got)\n\t}\n}\n\n// TestReduceStrings собирает строку.\nfunc TestReduceStrings(t *testing.T) {\n\tgot := Reduce([]string{\"a\", \"b\", \"c\"}, \"\", func(acc, value string) string { return acc + value })\n\tif got != \"abc\" {\n\t\tt.Fatalf(\"Reduce = %q\", got)\n\t}\n}\n\n// TestUniqueStrings убирает повторы.\nfunc TestUniqueStrings(t *testing.T) {\n\tgot := Unique([]string{\"a\", \"b\", \"a\", \"c\", \"b\"})\n\tif !reflect.DeepEqual(got, []string{\"a\", \"b\", \"c\"}) {\n\t\tt.Fatalf(\"Unique = %v\", got)\n\t}\n}\n\n// TestUniqueStructs работает со структурами.\nfunc TestUniqueStructs(t *testing.T) {\n\ttype point struct{ X, Y int }\n\tgot := Unique([]point{{1, 2}, {1, 2}, {3, 4}})\n\tif !reflect.DeepEqual(got, []point{{1, 2}, {3, 4}}) {\n\t\tt.Fatalf(\"Unique = %v\", got)\n\t}\n}\n"
+    },
+    {
+      "id": "http-crud",
+      "module": "m12",
+      "title": "REST API задач в памяти",
+      "summary": "Полноценный CRUD: маршруты, JSON, коды ответов и хранилище.",
+      "difficulty": "hard",
+      "topics": [
+        "http",
+        "rest",
+        "json",
+        "net/http"
+      ],
+      "minutes": 40,
+      "statement": "## Условие\n\nСоберите REST API для списка задач:\n\n```go\ntype Task struct {\n\tID    int    `json:\"id\"`\n\tTitle string `json:\"title\"`\n\tDone  bool   `json:\"done\"`\n}\n\nfunc NewAPI() http.Handler\n```\n\n| Запрос | Ответ |\n| --- | --- |\n| `GET /tasks` | `200` + `{\"tasks\":[...]}` |\n| `POST /tasks` с `{\"title\":\"...\"}` | `201` + созданная задача |\n| `PATCH /tasks/{id}` | `200` + задача с `done: true` |\n| `DELETE /tasks/{id}` | `204` без тела |\n| неизвестный id | `404` + JSON `{\"error\":\"task not found\"}` |\n\nТребования:\n\n- идентификаторы начинаются с 1 и увеличиваются;\n- задачи хранятся в памяти процесса;\n- при `POST` с пустым `title` верните `400` + `{\"error\":\"title is required\"}`;\n- порядок задач в `GET` — по возрастанию id.\n\nИспользуйте шаблоны маршрутов Go 1.22: `mux.HandleFunc(\"POST /tasks\", ...)` и\n`r.PathValue(\"id\")`.\n",
+      "starter_code": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"net/http\"\n)\n\n// Task — задача в списке.\ntype Task struct {\n\tID    int    `json:\"id\"`\n\tTitle string `json:\"title\"`\n\tDone  bool   `json:\"done\"`\n}\n\n// NewAPI собирает HTTP-обработчик со списком задач в памяти.\nfunc NewAPI() http.Handler {\n\tmux := http.NewServeMux()\n\n\tmux.HandleFunc(\"GET /tasks\", func(w http.ResponseWriter, r *http.Request) {\n\t\t// TODO: верните {\"tasks\": []}\n\t})\n\n\tmux.HandleFunc(\"POST /tasks\", func(w http.ResponseWriter, r *http.Request) {\n\t\t// TODO: прочитайте title, проверьте его и создайте задачу\n\t})\n\n\tmux.HandleFunc(\"PATCH /tasks/{id}\", func(w http.ResponseWriter, r *http.Request) {\n\t\t// TODO: отметьте задачу выполненной\n\t})\n\n\tmux.HandleFunc(\"DELETE /tasks/{id}\", func(w http.ResponseWriter, r *http.Request) {\n\t\t// TODO: удалите задачу\n\t})\n\n\treturn mux\n}\n\nfunc main() {\n\t_ = json.Marshal\n\thttp.ListenAndServe(\":8080\", NewAPI())\n}\n",
+      "solution": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"net/http\"\n\t\"strconv\"\n\t\"sync\"\n)\n\n// Task — задача в списке.\ntype Task struct {\n\tID    int    `json:\"id\"`\n\tTitle string `json:\"title\"`\n\tDone  bool   `json:\"done\"`\n}\n\ntype store struct {\n\tmu     sync.Mutex\n\ttasks  []Task\n\tnextID int\n}\n\nfunc writeJSON(w http.ResponseWriter, status int, body any) {\n\tw.Header().Set(\"Content-Type\", \"application/json; charset=utf-8\")\n\tw.WriteHeader(status)\n\tjson.NewEncoder(w).Encode(body)\n}\n\nfunc writeError(w http.ResponseWriter, status int, message string) {\n\twriteJSON(w, status, map[string]string{\"error\": message})\n}\n\nfunc (s *store) find(id int) int {\n\tfor index, task := range s.tasks {\n\t\tif task.ID == id {\n\t\t\treturn index\n\t\t}\n\t}\n\treturn -1\n}\n\n// NewAPI собирает HTTP-обработчик со списком задач в памяти.\nfunc NewAPI() http.Handler {\n\tmux := http.NewServeMux()\n\ts := &store{nextID: 1}\n\n\tmux.HandleFunc(\"GET /tasks\", func(w http.ResponseWriter, r *http.Request) {\n\t\ts.mu.Lock()\n\t\tdefer s.mu.Unlock()\n\t\twriteJSON(w, http.StatusOK, map[string]any{\"tasks\": append([]Task{}, s.tasks...)})\n\t})\n\n\tmux.HandleFunc(\"POST /tasks\", func(w http.ResponseWriter, r *http.Request) {\n\t\tvar payload struct {\n\t\t\tTitle string `json:\"title\"`\n\t\t}\n\t\tif err := json.NewDecoder(r.Body).Decode(&payload); err != nil {\n\t\t\twriteError(w, http.StatusBadRequest, \"invalid json\")\n\t\t\treturn\n\t\t}\n\t\tif payload.Title == \"\" {\n\t\t\twriteError(w, http.StatusBadRequest, \"title is required\")\n\t\t\treturn\n\t\t}\n\t\ts.mu.Lock()\n\t\ttask := Task{ID: s.nextID, Title: payload.Title}\n\t\ts.nextID++\n\t\ts.tasks = append(s.tasks, task)\n\t\ts.mu.Unlock()\n\t\twriteJSON(w, http.StatusCreated, task)\n\t})\n\n\tmux.HandleFunc(\"PATCH /tasks/{id}\", func(w http.ResponseWriter, r *http.Request) {\n\t\tid, err := strconv.Atoi(r.PathValue(\"id\"))\n\t\tif err != nil {\n\t\t\twriteError(w, http.StatusNotFound, \"task not found\")\n\t\t\treturn\n\t\t}\n\t\ts.mu.Lock()\n\t\tindex := s.find(id)\n\t\tif index < 0 {\n\t\t\ts.mu.Unlock()\n\t\t\twriteError(w, http.StatusNotFound, \"task not found\")\n\t\t\treturn\n\t\t}\n\t\ts.tasks[index].Done = true\n\t\ttask := s.tasks[index]\n\t\ts.mu.Unlock()\n\t\twriteJSON(w, http.StatusOK, task)\n\t})\n\n\tmux.HandleFunc(\"DELETE /tasks/{id}\", func(w http.ResponseWriter, r *http.Request) {\n\t\tid, err := strconv.Atoi(r.PathValue(\"id\"))\n\t\tif err != nil {\n\t\t\twriteError(w, http.StatusNotFound, \"task not found\")\n\t\t\treturn\n\t\t}\n\t\ts.mu.Lock()\n\t\tindex := s.find(id)\n\t\tif index < 0 {\n\t\t\ts.mu.Unlock()\n\t\t\twriteError(w, http.StatusNotFound, \"task not found\")\n\t\t\treturn\n\t\t}\n\t\ts.tasks = append(s.tasks[:index], s.tasks[index+1:]...)\n\t\ts.mu.Unlock()\n\t\tw.WriteHeader(http.StatusNoContent)\n\t})\n\n\treturn mux\n}\n\nfunc main() {\n\thttp.ListenAndServe(\":8080\", NewAPI())\n}\n",
+      "hints": [
+        "Шаблоны маршрутов вида \"GET /tasks\" и \"PATCH /tasks/{id}\" появились в Go 1.22.",
+        "r.PathValue(\"id\") возвращает строку, её нужно превратить в число через strconv.Atoi.",
+        "Для 404 верните JSON {\"error\":\"task not found\"} и код http.StatusNotFound.",
+        "Не забывайте про мьютекс: сервер может обслуживать несколько запросов одновременно."
+      ],
+      "tests": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"net/http\"\n\t\"net/http/httptest\"\n\t\"strings\"\n\t\"testing\"\n)\n\nfunc do(t *testing.T, handler http.Handler, method, path, body string) *httptest.ResponseRecorder {\n\tt.Helper()\n\tvar reader *strings.Reader\n\tif body == \"\" {\n\t\treader = strings.NewReader(\"\")\n\t} else {\n\t\treader = strings.NewReader(body)\n\t}\n\trequest := httptest.NewRequest(method, path, reader)\n\trecorder := httptest.NewRecorder()\n\thandler.ServeHTTP(recorder, request)\n\treturn recorder\n}\n\n// TestAPICreateAndList создаёт задачу и читает список.\nfunc TestAPICreateAndList(t *testing.T) {\n\tapi := NewAPI()\n\n\tcreated := do(t, api, http.MethodPost, \"/tasks\", `{\"title\":\"Учить Go\"}`)\n\tif created.Code != http.StatusCreated {\n\t\tt.Fatalf(\"POST код = %d, тело %s\", created.Code, created.Body.String())\n\t}\n\tvar task Task\n\tif err := json.NewDecoder(created.Body).Decode(&task); err != nil {\n\t\tt.Fatalf(\"ответ не JSON: %v\", err)\n\t}\n\tif task.ID != 1 || task.Title != \"Учить Go\" || task.Done {\n\t\tt.Fatalf(\"задача = %+v\", task)\n\t}\n\n\tlist := do(t, api, http.MethodGet, \"/tasks\", \"\")\n\tif list.Code != http.StatusOK {\n\t\tt.Fatalf(\"GET код = %d\", list.Code)\n\t}\n\tvar body struct {\n\t\tTasks []Task `json:\"tasks\"`\n\t}\n\tif err := json.NewDecoder(list.Body).Decode(&body); err != nil {\n\t\tt.Fatalf(\"ответ не JSON: %v\", err)\n\t}\n\tif len(body.Tasks) != 1 || body.Tasks[0].Title != \"Учить Go\" {\n\t\tt.Fatalf(\"список = %+v\", body.Tasks)\n\t}\n}\n\n// TestAPIPatchMarksDone отмечает задачу выполненной.\nfunc TestAPIPatchMarksDone(t *testing.T) {\n\tapi := NewAPI()\n\tdo(t, api, http.MethodPost, \"/tasks\", `{\"title\":\"Первая\"}`)\n\tpatched := do(t, api, http.MethodPatch, \"/tasks/1\", \"\")\n\tif patched.Code != http.StatusOK {\n\t\tt.Fatalf(\"PATCH код = %d\", patched.Code)\n\t}\n\tvar task Task\n\tif err := json.NewDecoder(patched.Body).Decode(&task); err != nil {\n\t\tt.Fatalf(\"ответ не JSON: %v\", err)\n\t}\n\tif !task.Done {\n\t\tt.Fatalf(\"задача не выполнена: %+v\", task)\n\t}\n}\n\n// TestAPIDelete удаляет задачу.\nfunc TestAPIDelete(t *testing.T) {\n\tapi := NewAPI()\n\tdo(t, api, http.MethodPost, \"/tasks\", `{\"title\":\"Удалить меня\"}`)\n\tdeleted := do(t, api, http.MethodDelete, \"/tasks/1\", \"\")\n\tif deleted.Code != http.StatusNoContent {\n\t\tt.Fatalf(\"DELETE код = %d\", deleted.Code)\n\t}\n\tlist := do(t, api, http.MethodGet, \"/tasks\", \"\")\n\tvar body struct {\n\t\tTasks []Task `json:\"tasks\"`\n\t}\n\tjson.NewDecoder(list.Body).Decode(&body)\n\tif len(body.Tasks) != 0 {\n\t\tt.Fatalf(\"список после удаления = %+v\", body.Tasks)\n\t}\n}\n\n// TestAPINotFound возвращает 404 для неизвестного id.\nfunc TestAPINotFound(t *testing.T) {\n\tapi := NewAPI()\n\tfor _, response := range []*httptest.ResponseRecorder{\n\t\tdo(t, api, http.MethodPatch, \"/tasks/99\", \"\"),\n\t\tdo(t, api, http.MethodDelete, \"/tasks/99\", \"\"),\n\t} {\n\t\tif response.Code != http.StatusNotFound {\n\t\t\tt.Fatalf(\"код = %d, ожидалось 404\", response.Code)\n\t\t}\n\t\tif !strings.Contains(response.Body.String(), \"task not found\") {\n\t\t\tt.Fatalf(\"тело = %s\", response.Body.String())\n\t\t}\n\t}\n}\n\n// TestAPIRejectsEmptyTitle возвращает 400 без названия.\nfunc TestAPIRejectsEmptyTitle(t *testing.T) {\n\tapi := NewAPI()\n\tresponse := do(t, api, http.MethodPost, \"/tasks\", `{\"title\":\"\"}`)\n\tif response.Code != http.StatusBadRequest {\n\t\tt.Fatalf(\"код = %d, ожидалось 400\", response.Code)\n\t}\n\tif !strings.Contains(response.Body.String(), \"title is required\") {\n\t\tt.Fatalf(\"тело = %s\", response.Body.String())\n\t}\n}\n\n// TestAPIIDsIncrease выдаёт возрастающие идентификаторы.\nfunc TestAPIIDsIncrease(t *testing.T) {\n\tapi := NewAPI()\n\tfirst := do(t, api, http.MethodPost, \"/tasks\", `{\"title\":\"a\"}`)\n\tsecond := do(t, api, http.MethodPost, \"/tasks\", `{\"title\":\"b\"}`)\n\tvar taskA, taskB Task\n\tjson.NewDecoder(first.Body).Decode(&taskA)\n\tjson.NewDecoder(second.Body).Decode(&taskB)\n\tif taskB.ID != taskA.ID+1 {\n\t\tt.Fatalf(\"id = %d и %d\", taskA.ID, taskB.ID)\n\t}\n}\n"
+    }
+  ]
+}
