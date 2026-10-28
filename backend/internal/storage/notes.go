@@ -102,7 +102,7 @@ type NotesStats struct {
 	WithLesson int `json:"with_lesson"`
 }
 
-// Notes хранит заметки и папки в SQLite.
+// Notes хранит заметки и папки в Supabase.
 type Notes struct{ db *database.DB }
 
 // NewNotes создаёт сервис заметок.
@@ -118,8 +118,8 @@ func (n *Notes) List(ctx context.Context, filter NoteFilter) ([]Note, error) {
 	conditions := []string{"1 = 1"}
 	args := []any{}
 	if query := strings.TrimSpace(filter.Query); query != "" {
-		// Ищем по нормализованной колонке: SQLite не умеет нижний регистр для
-		// кириллицы, а search_text уже приведён в Go.
+		// Ищем по нормализованной колонке: нормализация делается в Go, чтобы
+		// поиск одинаково работал в SQLite-тестах и Postgres.
 		conditions = append(conditions, "search_text LIKE ?")
 		args = append(args, "%"+strings.ToLower(query)+"%")
 	}
@@ -343,7 +343,7 @@ func (n *Notes) Stats(ctx context.Context) (NotesStats, error) {
 	).Scan(&stats.ThisWeek); err != nil {
 		return NotesStats{}, fmt.Errorf("считать заметки за неделю: %w", err)
 	}
-	// Слова считаем в Go: SQLite не умеет аккуратно разбивать текст на слова.
+	// Слова считаем в Go: так результат не зависит от диалекта SQL.
 	rows, err := n.db.QueryContext(ctx, "SELECT body FROM notes")
 	if err != nil {
 		return NotesStats{}, err
@@ -409,7 +409,7 @@ func (n *Notes) RenameFolder(ctx context.Context, id, name string) (Folder, erro
 		return Folder{ID: id, Name: name}, nil
 	}
 
-	tx, err := n.db.BeginTx(ctx, nil)
+	tx, err := n.db.Begin(ctx)
 	if err != nil {
 		return Folder{}, err
 	}
@@ -443,7 +443,7 @@ func (n *Notes) DeleteFolder(ctx context.Context, id string) error {
 		return fmt.Errorf("%w: папку «%s» удалить нельзя", ErrNoteInvalid, DefaultFolder)
 	}
 
-	tx, err := n.db.BeginTx(ctx, nil)
+	tx, err := n.db.Begin(ctx)
 	if err != nil {
 		return err
 	}
@@ -479,7 +479,7 @@ func (n *Notes) ensureFolder(ctx context.Context, name string) error {
 
 // replaceTags перезаписывает теги заметки.
 func (n *Notes) replaceTags(ctx context.Context, noteID string, tags []string) error {
-	tx, err := n.db.BeginTx(ctx, nil)
+	tx, err := n.db.Begin(ctx)
 	if err != nil {
 		return err
 	}

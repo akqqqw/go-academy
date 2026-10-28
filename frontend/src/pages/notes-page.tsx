@@ -218,7 +218,7 @@ export function NotesPage() {
       <PageHeader
         eyebrow="Личное"
         title="Заметки"
-        description="Собственные записи в Markdown: папки, теги и связь с уроками. Текст хранится в локальной SQLite и сохраняется автоматически."
+        description="Собственные записи в Markdown: папки, теги и связь с уроками. Текст хранится в Supabase и сохраняется автоматически."
         actions={
           <div className="flex items-center gap-2">
             <Badge variant="primary">

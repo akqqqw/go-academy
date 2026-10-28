@@ -1,5 +1,5 @@
 // Package progress считает статистику обучения, серию дней и дневной план.
-// Все значения выводятся из данных в SQLite — никаких выдуманных цифр.
+// Все значения выводятся из данных в базе — никаких выдуманных цифр.
 package progress
 
 import (
@@ -247,8 +247,8 @@ func (s *Service) bestDay(ctx context.Context) (BestDay, error) {
 	var date string
 	var seconds int
 	err := s.db.QueryRowContext(ctx, `
-		SELECT date, study_seconds FROM activity_days
-		ORDER BY study_seconds DESC, date ASC LIMIT 1`).Scan(&date, &seconds)
+		SELECT day, study_seconds FROM activity_days
+		ORDER BY study_seconds DESC, day ASC LIMIT 1`).Scan(&date, &seconds)
 	if err != nil {
 		return BestDay{}, err
 	}

@@ -78,7 +78,7 @@ func (a *Activity) increment(ctx context.Context, column string, delta int) (Day
 	// column берётся из белого списка, поэтому подстановка безопасна.
 	stmt := fmt.Sprintf(`
 		INSERT INTO activity_days (day, %[1]s, updated_at) VALUES (?, ?, ?)
-		ON CONFLICT(day) DO UPDATE SET %[1]s = %[1]s + excluded.%[1]s, updated_at = excluded.updated_at`,
+		ON CONFLICT(user_id, day) DO UPDATE SET %[1]s = activity_days.%[1]s + excluded.%[1]s, updated_at = excluded.updated_at`,
 		column)
 	if _, err := a.db.ExecContext(ctx, stmt, day, delta, now); err != nil {
 		return Day{}, fmt.Errorf("обновить активность: %w", err)

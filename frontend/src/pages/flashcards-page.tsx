@@ -316,7 +316,7 @@ export function FlashcardsPage() {
       <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-fg-subtle">
         <AlertTriangle className="mt-0.5 size-3 shrink-0" />
         Оценки меняют интервал: «Снова» — через 10 минут и ниже сложность, «Трудно» — короткий шаг,
-        «Хорошо» — обычный, «Легко» — длинный. Всё считается локально, без интернета.
+        «Хорошо» — обычный, «Легко» — длинный. Прогресс синхронизируется с аккаунтом.
       </p>
 
       {session ? (

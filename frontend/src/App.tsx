@@ -3,8 +3,11 @@ import { Suspense, lazy, useEffect } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { Toaster } from 'sonner'
 
+import { AuthProvider } from '@/auth/auth-context'
+import { PublicOnly, RequireAuth } from '@/auth/require-auth'
 import { AppShell } from '@/components/layout/app-shell'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { LoginPage, RegisterPage, ResetPasswordPage } from '@/pages/auth-pages'
 import { DashboardPage } from '@/pages/dashboard-page'
 import { FlashcardsPage } from '@/pages/flashcards-page'
 import { LearningPage } from '@/pages/learning-page'
@@ -55,84 +58,94 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider delayDuration={250}>
-        <BrowserRouter>
-          <ScrollRestoration />
-          <Routes>
-            <Route element={<AppShell />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="learning" element={<LearningPage />} />
-              <Route
-                path="learning/:lessonId"
-                element={
-                  <Suspense
-                    fallback={
-                      <div className="flex items-center gap-2 py-16 text-sm text-fg-muted">
-                        <span className="size-3 animate-pulse-soft rounded-full bg-primary" />
-                        Загружаем урок…
-                      </div>
+      <AuthProvider>
+        <TooltipProvider delayDuration={250}>
+          <BrowserRouter>
+            <ScrollRestoration />
+            <Routes>
+              <Route element={<PublicOnly />}>
+                <Route path="login" element={<LoginPage />} />
+                <Route path="register" element={<RegisterPage />} />
+              </Route>
+              <Route path="reset-password" element={<ResetPasswordPage />} />
+              <Route element={<RequireAuth />}>
+                <Route element={<AppShell />}>
+                  <Route index element={<DashboardPage />} />
+                  <Route path="learning" element={<LearningPage />} />
+                  <Route
+                    path="learning/:lessonId"
+                    element={
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center gap-2 py-16 text-sm text-fg-muted">
+                            <span className="size-3 animate-pulse-soft rounded-full bg-primary" />
+                            Загружаем урок…
+                          </div>
+                        }
+                      >
+                        <LessonPage />
+                      </Suspense>
                     }
-                  >
-                    <LessonPage />
-                  </Suspense>
-                }
-              />
-              <Route path="practice" element={<PracticePage />} />
-              <Route
-                path="practice/:exerciseId"
-                element={
-                  <Suspense
-                    fallback={
-                      <div className="flex items-center gap-2 py-16 text-sm text-fg-muted">
-                        <span className="size-3 animate-pulse-soft rounded-full bg-primary" />
-                        Загружаем задание…
-                      </div>
+                  />
+                  <Route path="practice" element={<PracticePage />} />
+                  <Route
+                    path="practice/:exerciseId"
+                    element={
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center gap-2 py-16 text-sm text-fg-muted">
+                            <span className="size-3 animate-pulse-soft rounded-full bg-primary" />
+                            Загружаем задание…
+                          </div>
+                        }
+                      >
+                        <ExercisePage />
+                      </Suspense>
                     }
-                  >
-                    <ExercisePage />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="editor"
-                element={
-                  <Suspense
-                    fallback={
-                      <div className="flex items-center gap-2 py-16 text-sm text-fg-muted">
-                        <span className="size-3 animate-pulse-soft rounded-full bg-primary" />
-                        Загружаем редактор…
-                      </div>
+                  />
+                  <Route
+                    path="editor"
+                    element={
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center gap-2 py-16 text-sm text-fg-muted">
+                            <span className="size-3 animate-pulse-soft rounded-full bg-primary" />
+                            Загружаем редактор…
+                          </div>
+                        }
+                      >
+                        <EditorPage />
+                      </Suspense>
                     }
-                  >
-                    <EditorPage />
-                  </Suspense>
-                }
-              />
-              <Route path="notes" element={<NotesPage />} />
-              <Route path="notes/:noteId" element={<NotesPage />} />
-              <Route path="flashcards" element={<FlashcardsPage />} />
-              <Route path="quizzes" element={<QuizzesPage />} />
-              <Route path="quizzes/:quizId" element={<QuizPage />} />
-              <Route path="achievements" element={<AchievementsPage />} />
-              <Route path="progress" element={<ProgressPage />} />
-              <Route path="settings" element={<SettingsPage />} />
+                  />
+                  <Route path="notes" element={<NotesPage />} />
+                  <Route path="notes/:noteId" element={<NotesPage />} />
+                  <Route path="flashcards" element={<FlashcardsPage />} />
+                  <Route path="quizzes" element={<QuizzesPage />} />
+                  <Route path="quizzes/:quizId" element={<QuizPage />} />
+                  <Route path="achievements" element={<AchievementsPage />} />
+                  <Route path="progress" element={<ProgressPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Route>
+              </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-        <Toaster
-          theme="system"
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              background: 'var(--surface-raised)',
-              border: '1px solid var(--border)',
-              color: 'var(--fg)',
-              fontSize: '13px',
-            },
-          }}
-        />
-      </TooltipProvider>
+            </Routes>
+          </BrowserRouter>
+          <Toaster
+            theme="system"
+            position="bottom-right"
+            toastOptions={{
+              style: {
+                background: 'var(--surface-raised)',
+                border: '1px solid var(--border)',
+                color: 'var(--fg)',
+                fontSize: '13px',
+              },
+            }}
+          />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }

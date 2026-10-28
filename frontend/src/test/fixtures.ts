@@ -1,7 +1,6 @@
 import type {
   Achievement,
   ActivityResponse,
-  BackupInfo,
   CourseResponse,
   DashboardResponse,
   LessonContentResponse,
@@ -240,10 +239,12 @@ export const metaFixture: Meta = {
   runtime: { go: 'go1.24.0', os: 'linux', arch: 'amd64', started_at: new Date().toISOString(), uptime_seconds: 120 },
   storage: {
     data_dir: '/data',
-    db_path: '/data/academy.db',
-    db_size_bytes: 118_784,
+    db_path: 'supabase',
+    driver: 'postgres',
+    remote: true,
+    db_size_bytes: 0,
     schema_version: 1,
-    backups: 1,
+    backups: 0,
   },
   content: {
     title: 'Go с нуля до бэкенда',
@@ -259,19 +260,6 @@ export const metaFixture: Meta = {
   },
   server: { addr: '127.0.0.1:8080', cors_origins: ['http://localhost:5173'] },
 }
-
-export const backupsFixture: { backups: BackupInfo[]; count: number } = {
-  backups: [
-    {
-      name: 'academy-20261026-120000.db',
-      path: '/data/backups/academy-20261026-120000.db',
-      size_bytes: 118_784,
-      created_at: new Date().toISOString(),
-    },
-  ],
-  count: 1,
-}
-
 
 export const lessonContentFixture: LessonContentResponse = {
   lesson: {

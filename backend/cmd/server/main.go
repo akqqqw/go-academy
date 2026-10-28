@@ -1,4 +1,4 @@
-// Команда server запускает локальный backend Go Academy: REST API, SQLite и
+// Команда server запускает backend Go Academy: REST API, база данных и
 // раздачу собранного фронтенда.
 package main
 
@@ -29,6 +29,7 @@ func main() {
 }
 
 func run(args []string) error {
+	config.LoadDotEnv()
 	cfg, err := config.Load(args)
 	if err != nil {
 		return err
@@ -47,7 +48,7 @@ func run(args []string) error {
 		logger.Info("контент распакован из бинарника", "dir", extractedDir)
 	}
 
-	db, err := database.Open(cfg.DBPath())
+	db, err := openDatabase(cfg)
 	if err != nil {
 		return fmt.Errorf("база данных: %w", err)
 	}
@@ -57,14 +58,17 @@ func run(args []string) error {
 	defer stop()
 
 	// Резервная копия при каждом запуске: обновление приложения не должно
-	// привести к потере пользовательских данных.
-	backupCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	if backup, err := storage.BackupOnStart(backupCtx, db, cfg.DataDir, 5); err != nil {
-		logger.Warn("не удалось создать резервную копию", "err", err)
-	} else {
-		logger.Info("резервная копия создана", "file", backup.Name, "size_kb", backup.SizeBytes/1024)
+	// привести к потере пользовательских данных. Для Supabase бэкапы делает
+	// сама платформа, локальный VACUUM INTO там недоступен.
+	if !db.IsPostgres() {
+		backupCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		if backup, err := storage.BackupOnStart(backupCtx, db, cfg.DataDir, 5); err != nil {
+			logger.Warn("не удалось создать резервную копию", "err", err)
+		} else {
+			logger.Info("резервная копия создана", "file", backup.Name, "size_kb", backup.SizeBytes/1024)
+		}
+		cancel()
 	}
-	cancel()
 
 	// Каталоги для запусков кода создаются заранее: раннер не должен падать на
 	// первом запуске из-за отсутствующей папки.
@@ -89,7 +93,7 @@ func run(args []string) error {
 	go func() {
 		logger.Info("Go Academy backend запущен",
 			"addr", "http://"+cfg.Addr,
-			"db", cfg.DBPath(),
+			"db", db.Path,
 			"content", cfg.ContentDir,
 			"frontend_ready", server.FrontendReady(),
 		)
@@ -112,4 +116,16 @@ func run(args []string) error {
 	}
 	logger.Info("сервер остановлен")
 	return nil
+}
+
+// openDatabase выбирает Supabase Postgres, если задана строка подключения.
+// SQLite остаётся только для тестов и режима без авторизации.
+func openDatabase(cfg config.Config) (*database.DB, error) {
+	if cfg.DatabaseURL != "" {
+		return database.OpenPostgres(cfg.DatabaseURL)
+	}
+	if cfg.RequireAuth {
+		return nil, errors.New("не задана строка подключения SUPABASE_DB_URL")
+	}
+	return database.Open(cfg.DBPath())
 }

@@ -1,7 +1,7 @@
+import { supabase, supabaseConfigured } from '@/lib/supabase'
 import type {
   ActivityResponse,
   ApiErrorBody,
-  BackupInfo,
   CourseResponse,
   DashboardResponse,
   DraftResponse,
@@ -55,11 +55,21 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers)
+  if (init?.body) headers.set('Content-Type', 'application/json')
+
+  if (supabaseConfigured) {
+    const { data } = await supabase.auth.getSession()
+    if (data.session?.access_token) {
+      headers.set('Authorization', `Bearer ${data.session.access_token}`)
+    }
+  }
+
   let response: Response
   try {
     response = await fetch(path, {
-      headers: init?.body ? { 'Content-Type': 'application/json' } : undefined,
       ...init,
+      headers,
     })
   } catch {
     throw new ApiError(
@@ -67,6 +77,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       0,
       'network_error',
     )
+  }
+
+  if (response.status === 401) {
+    // Сессия истекла или отозвана: возвращаем пользователя на экран входа.
+    if (supabaseConfigured) void supabase.auth.signOut()
+    throw new ApiError('Сессия истекла. Войдите снова.', 401, 'unauthorized')
   }
 
   if (!response.ok) {
@@ -168,29 +184,6 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ seconds, source }),
     }),
-
-  backups: () => request<{ backups: BackupInfo[]; count: number }>('/api/backups'),
-
-  /** Скачивает свежую резервную копию базы данных. */
-  downloadBackup: async () => {
-    const response = await fetch('/api/backup')
-    if (!response.ok) {
-      throw new ApiError('Не удалось создать резервную копию', response.status)
-    }
-    const blob = await response.blob()
-    const disposition = response.headers.get('Content-Disposition') ?? ''
-    const match = /filename="?([^";]+)"?/.exec(disposition)
-    const name = match?.[1] ?? 'academy-backup.db'
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = name
-    document.body.append(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
-    return name
-  },
 
   reloadContent: () =>
     request<{ status: string; lessons: number; exercises: number }>('/api/content/reload', {

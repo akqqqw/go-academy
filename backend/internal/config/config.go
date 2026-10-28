@@ -5,6 +5,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -44,6 +45,14 @@ type Config struct {
 	RunMaxOutput int
 	// RunMaxCode — лимит размера исходника.
 	RunMaxCode int
+	// SupabaseURL — адрес проекта Supabase (https://<ref>.supabase.co).
+	SupabaseURL string
+	// SupabaseKey — publishable/anon key для проверки токенов через Auth API.
+	SupabaseKey string
+	// DatabaseURL — строка подключения к Supabase Postgres.
+	DatabaseURL string
+	// RequireAuth — закрывать ли API без валидной сессии Supabase.
+	RequireAuth bool
 }
 
 // DBPath возвращает путь к файлу базы данных.
@@ -93,6 +102,13 @@ func Load(args []string) (Config, error) {
 	goBinary := fs.String("go", envOr("GOACADEMY_GO_BIN", ""), "путь к go (по умолчанию ищется в PATH)")
 	runTimeout := fs.Int("run-timeout", envIntOr("GOACADEMY_RUN_TIMEOUT_SEC", 10), "лимит выполнения кода, секунды")
 	origins := fs.String("cors", envOr("GOACADEMY_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"), "разрешённые origin'ы через запятую")
+	supabaseURL := strings.TrimRight(envOr("SUPABASE_URL", ""), "/")
+	supabaseKey := envOr("SUPABASE_ANON_KEY", envOr("PUBLIC_KEY", ""))
+	databaseURL := envOr("SUPABASE_DB_URL", envOr("CONNECTION_URL", ""))
+	if supabaseURL == "" && databaseURL != "" {
+		supabaseURL = supabaseURLFromDatabase(databaseURL)
+	}
+	requireAuth := envOr("GOACADEMY_REQUIRE_AUTH", "1") != "0"
 
 	if err := fs.Parse(args); err != nil {
 		return Config{}, err
@@ -114,6 +130,10 @@ func Load(args []string) (Config, error) {
 		RunTimeout:      time.Duration(*runTimeout) * time.Second,
 		RunMaxOutput:    256 << 10,
 		RunMaxCode:      256 << 10,
+		SupabaseURL:     supabaseURL,
+		SupabaseKey:     supabaseKey,
+		DatabaseURL:     databaseURL,
+		RequireAuth:     requireAuth,
 	}
 	for _, origin := range strings.Split(*origins, ",") {
 		if trimmed := strings.TrimSpace(origin); trimmed != "" {
@@ -151,4 +171,19 @@ func envIntOr(key string, fallback int) int {
 		}
 	}
 	return fallback
+}
+
+// supabaseURLFromDatabase выводит адрес проекта из строки подключения
+// postgres.<ref>@...pooler.supabase.com. Если разобрать не удалось — пустая строка.
+func supabaseURLFromDatabase(databaseURL string) string {
+	parsed, err := url.Parse(databaseURL)
+	if err != nil || parsed.User == nil {
+		return ""
+	}
+	username := parsed.User.Username()
+	ref := strings.TrimPrefix(username, "postgres.")
+	if ref == username || ref == "" {
+		return ""
+	}
+	return "https://" + ref + ".supabase.co"
 }

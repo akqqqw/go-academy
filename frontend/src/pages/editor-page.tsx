@@ -349,7 +349,7 @@ export function EditorPage() {
         </span>
         <span className="inline-flex items-center gap-1.5">
           <Clock3 className="size-3.5" />
-          история сохраняется в SQLite
+          история сохраняется в аккаунте
         </span>
       </div>
     </div>

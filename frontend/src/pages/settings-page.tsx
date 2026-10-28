@@ -1,7 +1,7 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import {
+  Cloud,
   Database,
-  Download,
   FolderCog,
   Info,
   Monitor,
@@ -25,7 +25,7 @@ import { Segmented } from '@/components/ui/segmented'
 import { Stepper } from '@/components/ui/stepper'
 import { Switch } from '@/components/ui/switch'
 import { api } from '@/lib/api'
-import { cn, formatBytes, formatDateTime, plural } from '@/lib/utils'
+import { cn, formatDateTime, plural } from '@/lib/utils'
 import { useMeta } from '@/services/queries'
 import { DEFAULT_SETTINGS, useSettingsStore } from '@/store/settings'
 import type { Settings, ThemePreference } from '@/types'
@@ -71,34 +71,13 @@ export function SettingsPage() {
   const saving = useSettingsStore((state) => state.saving)
   const meta = useMeta()
   const queryClient = useQueryClient()
-  const [downloading, setDownloading] = useState(false)
   const [reloading, setReloading] = useState(false)
-
-  const backups = useQuery({
-    queryKey: ['backups'],
-    queryFn: api.backups,
-    staleTime: 15_000,
-  })
 
   const save = async (changes: Partial<Settings>) => {
     try {
       await update(changes)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Не удалось сохранить настройку')
-    }
-  }
-
-  const handleDownload = async () => {
-    setDownloading(true)
-    try {
-      const name = await api.downloadBackup()
-      toast.success(`Резервная копия скачана: ${name}`)
-      await queryClient.invalidateQueries({ queryKey: ['backups'] })
-      await meta.refetch()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Не удалось создать копию')
-    } finally {
-      setDownloading(false)
     }
   }
 
@@ -140,7 +119,7 @@ export function SettingsPage() {
       <PageHeader
         eyebrow="Приложение"
         title="Настройки"
-        description="Тема, дневные цели, параметры редактора и работа с локальными данными. Изменения сохраняются автоматически в SQLite."
+        description="Тема, дневные цели и параметры редактора. Изменения сохраняются в аккаунте Supabase автоматически."
         actions={
           <span className="flex items-center gap-1.5 text-[11px] text-fg-subtle">
             <Save className={cn('size-3.5', saving && 'animate-pulse-soft text-warning')} />
@@ -275,15 +254,11 @@ export function SettingsPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Database className="size-4 text-primary" />
-              Данные и резервные копии
+              <Cloud className="size-4 text-primary" />
+              Данные аккаунта
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={handleDownload} disabled={downloading}>
-              <Download />
-              {downloading ? 'Создаём…' : 'Скачать копию'}
-            </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             {meta.isError ? (
@@ -292,8 +267,10 @@ export function SettingsPage() {
               <>
                 <dl className="space-y-2 text-[12px]">
                   {[
-                    ['База данных', meta.data.storage.db_path],
-                    ['Размер базы', formatBytes(meta.data.storage.db_size_bytes)],
+                    [
+                      'Хранилище',
+                      meta.data.storage.remote ? 'Supabase Postgres' : 'SQLite (локальный режим)',
+                    ],
                     ['Версия схемы', `${meta.data.storage.schema_version}`],
                     ['Контент', meta.data.content.content_dir],
                   ].map(([label, value]) => (
@@ -305,34 +282,17 @@ export function SettingsPage() {
                 </dl>
 
                 <div className="rounded-lg border border-line bg-surface-inset p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-[12px] font-medium text-fg">
-                      Резервные копии ·{' '}
-                      {backups.data ? backups.data.count : meta.data.storage.backups}
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[12px] font-medium text-fg">Резервные копии</span>
+                    <span className="text-[11px] text-fg-subtle">
+                      {meta.data.storage.remote ? 'Supabase' : 'локальный режим'}
                     </span>
-                    <span className="text-[11px] text-fg-subtle">хранятся 5 последних</span>
                   </div>
-                  {backups.isError ? (
-                    <p className="text-[12px] text-danger">Не удалось получить список копий.</p>
-                  ) : backups.data && backups.data.backups.length > 0 ? (
-                    <ul className="space-y-1">
-                      {backups.data.backups.slice(0, 4).map((backup) => (
-                        <li
-                          key={backup.name}
-                          className="flex items-center justify-between gap-2 font-mono text-[11px] text-fg-muted"
-                        >
-                          <span className="truncate">{backup.name}</span>
-                          <span className="shrink-0 text-fg-subtle">
-                            {formatBytes(backup.size_bytes)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-[12px] text-fg-subtle">
-                      Копии создаются автоматически при запуске сервера.
-                    </p>
-                  )}
+                  <p className="text-[12px] leading-relaxed text-fg-subtle">
+                    {meta.data.storage.remote
+                      ? 'Supabase делает резервные копии автоматически. Расписание и восстановление — в панели проекта: Project Settings → Database → Backups.'
+                      : 'Локальная база используется только для тестов. Рабочие данные аккаунта хранятся в Supabase.'}
+                  </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 border-t border-line/70 pt-3">
@@ -399,7 +359,7 @@ export function SettingsPage() {
                 },
                 {
                   icon: Info,
-                  label: 'Обновлено',
+                  label: 'Сервер запущен',
                   value: formatDateTime(meta.data.runtime.started_at),
                 },
               ].map((row) => (
@@ -418,8 +378,8 @@ export function SettingsPage() {
             <p className="text-[12px] text-fg-muted">Загружаем сведения о сервере…</p>
           )}
           <p className="mt-4 border-t border-line/70 pt-3 text-[11px] leading-relaxed text-fg-subtle">
-            Приложение работает локально и не требует интернета. Данные не покидают компьютер;
-            достижения и материалы практики появятся в следующих этапах. Текущий статус:{' '}
+            Аккаунт, прогресс, заметки и карточки хранятся в Supabase и синхронизируются между
+            устройствами. Код заданий выполняется на сервере Go Academy. Текущий статус:{' '}
             <Badge variant="primary">{meta.data?.app.stage_label ?? 'подключение'}</Badge>{' '}
             {meta.data ? `· ${meta.data.content.decks} ${plural(meta.data.content.decks, 'набор', 'набора', 'наборов')} карточек` : null}
           </p>

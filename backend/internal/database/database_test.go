@@ -21,7 +21,7 @@ func TestOpenAppliesSchemaOnce(t *testing.T) {
 		t.Errorf("версия схемы = %d, ожидалась %d", version, len(migrations))
 	}
 
-	tables := []string{"settings", "activity_days", "lessons", "exercises", "notes", "flashcards", "quiz_attempts", "achievements", "code_runs", "code_drafts"}
+	tables := []string{"user_profiles", "settings", "activity_days", "lessons", "exercises", "notes", "note_tags", "note_folders", "flashcards", "card_reviews", "quiz_attempts", "exercise_attempts", "achievements", "code_runs", "code_drafts"}
 	for _, table := range tables {
 		var name string
 		err := db.QueryRowContext(ctx, "SELECT name FROM sqlite_master WHERE type='table' AND name=?", table).Scan(&name)
@@ -41,7 +41,7 @@ func TestOpenAppliesSchemaOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := db.ExecContext(ctx,
-		"INSERT INTO settings (key, value, updated_at) VALUES ('theme', '\"light\"', ?) ON CONFLICT(key) DO UPDATE SET value='ok'", Now()); err != nil {
+		"INSERT INTO settings (key, value, updated_at) VALUES ('theme', '\"light\"', ?) ON CONFLICT(user_id, key) DO UPDATE SET value='ok'", Now()); err != nil {
 		t.Fatal(err)
 	}
 	version, err = db.SchemaVersion(ctx)

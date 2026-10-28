@@ -309,7 +309,7 @@ func (a *Achievements) unlocked(ctx context.Context) (map[string]string, error) 
 
 func (a *Achievements) unlock(ctx context.Context, code, at string) error {
 	_, err := a.db.ExecContext(ctx,
-		"INSERT OR IGNORE INTO achievements (code, unlocked_at) VALUES (?, ?)", code, at)
+		"INSERT INTO achievements (code, unlocked_at) VALUES (?, ?) ON CONFLICT DO NOTHING", code, at)
 	if err != nil {
 		return fmt.Errorf("сохранить достижение %q: %w", code, err)
 	}

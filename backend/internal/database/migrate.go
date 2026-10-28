@@ -4,26 +4,15 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"strings"
 	"time"
 )
 
-//go:embed schema.sql
-var schemaV1 string
+//go:embed schema_sqlite.sql
+var schemaSQLite string
 
-//go:embed schema_v2.sql
-var schemaV2 string
-
-//go:embed schema_v3.sql
-var schemaV3 string
-
-//go:embed schema_v4.sql
-var schemaV4 string
-
-//go:embed schema_v5.sql
-var schemaV5 string
-
-//go:embed schema_v6.sql
-var schemaV6 string
+//go:embed schema_pg.sql
+var schemaPostgres string
 
 type migration struct {
 	version int
@@ -31,15 +20,10 @@ type migration struct {
 	sql     string
 }
 
-// migrations — упорядоченный список миграций. Новые изменения схемы добавляются
-// отдельными шагами, уже применённые никогда не переписываются.
+// migrations — схема SQLite для тестов. Production-схема Postgres применяется
+// отдельно и described в schema_pg.sql.
 var migrations = []migration{
-	{version: 1, name: "initial_schema", sql: schemaV1},
-	{version: 2, name: "code_drafts", sql: schemaV2},
-	{version: 3, name: "exercise_attempts", sql: schemaV3},
-	{version: 4, name: "note_folders", sql: schemaV4},
-	{version: 5, name: "flashcard_hints", sql: schemaV5},
-	{version: 6, name: "quiz_answers", sql: schemaV6},
+	{version: 1, name: "initial_schema", sql: schemaSQLite},
 }
 
 func (d *DB) migrate(ctx context.Context) error {
@@ -74,7 +58,7 @@ func (d *DB) migrate(ctx context.Context) error {
 		if applied[m.version] {
 			continue
 		}
-		tx, err := d.BeginTx(ctx, nil)
+		tx, err := d.Begin(ctx)
 		if err != nil {
 			return fmt.Errorf("начать миграцию %d: %w", m.version, err)
 		}
@@ -95,6 +79,115 @@ func (d *DB) migrate(ctx context.Context) error {
 	return nil
 }
 
+// migratePostgres применяет схему Supabase: таблицы, RLS-политики и гранты.
+func (d *DB) migratePostgres(ctx context.Context) error {
+	if _, err := d.DB.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations (
+		version INTEGER PRIMARY KEY,
+		name TEXT NOT NULL,
+		applied_at TEXT NOT NULL
+	)`); err != nil {
+		return fmt.Errorf("создать таблицу миграций Postgres: %w", err)
+	}
+
+	// Несколько инстансов serverless могут стартовать одновременно. Advisory
+	// lock сериализует миграцию, повторная проверка внутри транзакции не даёт
+	// применить схему дважды.
+	tx, err := d.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("начать миграцию Postgres: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, "SELECT pg_advisory_xact_lock($1)", migrationLockID); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("заблокировать миграцию Postgres: %w", err)
+	}
+
+	var applied int
+	if err := tx.QueryRowContext(ctx,
+		"SELECT COUNT(*) FROM schema_migrations WHERE version = 1").Scan(&applied); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("прочитать миграции Postgres: %w", err)
+	}
+	if applied > 0 {
+		_ = tx.Rollback()
+		return nil
+	}
+
+	for index, statement := range splitSQLStatements(schemaPostgres) {
+		if _, err := tx.ExecContext(ctx, statement); err != nil {
+			_ = tx.Rollback()
+			return fmt.Errorf("миграция Postgres, запрос %d: %w", index+1, err)
+		}
+	}
+	if _, err := tx.ExecContext(ctx,
+		"INSERT INTO schema_migrations (version, name, applied_at) VALUES ($1, $2, $3)",
+		1, "supabase_initial_schema", nowUTC()); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("записать миграцию Postgres: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("зафиксировать миграцию Postgres: %w", err)
+	}
+	return nil
+}
+
+// migrationLockID — произвольный постоянный ключ advisory-блокировки миграций.
+const migrationLockID = 741852963
+
+// splitSQLStatements делит файл на отдельные запросы: pgx не выполняет
+// несколько statement'ов в extended-протоколе. Точки с запятой внутри строк и
+// dollar-quoted блоков игнорируются.
+func splitSQLStatements(script string) []string {
+	var statements []string
+	var current strings.Builder
+	inSingle, inDouble, inDollar := false, false, false
+	for i := 0; i < len(script); i++ {
+		ch := script[i]
+		if !inSingle && !inDouble && !inDollar && ch == '-' && i+1 < len(script) && script[i+1] == '-' {
+			// Комментарий до конца строки.
+			for i < len(script) && script[i] != '\n' {
+				i++
+			}
+			current.WriteByte('\n')
+			continue
+		}
+		switch ch {
+		case '\'':
+			if !inDouble && !inDollar {
+				if inSingle && i+1 < len(script) && script[i+1] == '\'' {
+					current.WriteString("''")
+					i++
+					continue
+				}
+				inSingle = !inSingle
+			}
+		case '"':
+			if !inSingle && !inDollar {
+				inDouble = !inDouble
+			}
+		case '$':
+			if !inSingle && !inDouble && i+1 < len(script) && script[i+1] == '$' {
+				inDollar = !inDollar
+				current.WriteString("$$")
+				i++
+				continue
+			}
+		case ';':
+			if !inSingle && !inDouble && !inDollar {
+				if statement := strings.TrimSpace(current.String()); statement != "" {
+					statements = append(statements, statement)
+				}
+				current.Reset()
+				continue
+			}
+		}
+		current.WriteByte(ch)
+	}
+	if statement := strings.TrimSpace(current.String()); statement != "" {
+		statements = append(statements, statement)
+	}
+	return statements
+}
+
 // SchemaVersion возвращает максимальную применённую версию схемы.
 func (d *DB) SchemaVersion(ctx context.Context) (int, error) {
 	var version int
@@ -105,6 +198,8 @@ func (d *DB) SchemaVersion(ctx context.Context) (int, error) {
 
 // Now возвращает текущее локальное время в формате RFC3339 (используется во всех таблицах).
 func Now() string { return time.Now().Format(time.RFC3339) }
+
+func nowUTC() string { return time.Now().UTC().Format(time.RFC3339) }
 
 // Today возвращает текущую локальную дату в формате YYYY-MM-DD.
 func Today() string { return time.Now().Format("2006-01-02") }

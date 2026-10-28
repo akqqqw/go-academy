@@ -24,7 +24,7 @@ type Draft struct {
 	Size      int    `json:"size"`
 }
 
-// Drafts хранит черновики кода в SQLite.
+// Drafts хранит черновики кода в Supabase.
 type Drafts struct{ db *database.DB }
 
 // NewDrafts создаёт сервис черновиков.
@@ -53,7 +53,7 @@ func (d *Drafts) Save(ctx context.Context, key, title, code string) (Draft, erro
 	_, err := d.db.ExecContext(ctx, `
 		INSERT INTO code_drafts (key, title, code, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?)
-		ON CONFLICT(key) DO UPDATE SET
+		ON CONFLICT(user_id, key) DO UPDATE SET
 			title = excluded.title,
 			code = excluded.code,
 			updated_at = excluded.updated_at`,

@@ -22,7 +22,7 @@ export function DashboardPage() {
       <PageHeader
         eyebrow={formatTodayGreeting()}
         title={`${greeting()}, продолжаем Go`}
-        description="Короткая сводка обучения: текущий урок, дневные цели и реальная статистика. Все данные хранятся локально."
+        description="Короткая сводка обучения: текущий урок, дневные цели и реальная статистика. Все данные хранятся в аккаунте Supabase."
         actions={
           <Button asChild variant="outline" size="sm">
             <Link to="/learning">
@@ -92,7 +92,7 @@ export function DashboardPage() {
           <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-line-strong px-4 py-3">
             <p className="text-[12px] leading-relaxed text-fg-muted">
               Уроки, редактор с запуском кода, практика, заметки, карточки и тесты уже работают.
-              Прогресс и достижения считаются из локальной базы.
+              Прогресс и достижения считаются из данных аккаунта.
             </p>
             <Button asChild variant="ghost" size="sm">
               <Link to="/progress">

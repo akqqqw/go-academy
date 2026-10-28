@@ -63,7 +63,7 @@ export function AppShell() {
 
         <footer className="border-t border-line px-4 py-4 sm:px-6 lg:px-8">
           <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-center justify-between gap-2 text-[11px] text-fg-subtle">
-            <span>Go Academy · данные хранятся локально в SQLite</span>
+            <span>Go Academy · прогресс синхронизируется с Supabase</span>
             <span className="flex items-center gap-2">
               <span className="flex items-center gap-1.5">
                 <span

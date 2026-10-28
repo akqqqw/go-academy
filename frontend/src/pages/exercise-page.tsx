@@ -365,7 +365,7 @@ export function ExercisePage() {
             </ul>
             <p className="mt-2 flex items-center gap-1.5 text-[11px] text-fg-subtle">
               <Info className="size-3" />
-              Попытки сохраняются в SQLite и учитываются в статистике и дневном плане.
+              Попытки сохраняются в аккаунте и учитываются в статистике и дневном плане.
             </p>
           </CardContent>
         </Card>

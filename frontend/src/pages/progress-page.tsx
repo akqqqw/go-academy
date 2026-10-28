@@ -36,7 +36,7 @@ export function ProgressPage() {
       <PageHeader
         eyebrow="Статистика"
         title="Ваш прогресс"
-        description="Все цифры считаются из локальной базы: уроки, практика, карточки и время занятий. Календарь показывает реальную активность по дням."
+        description="Все цифры считаются из базы аккаунта: уроки, практика, карточки и время занятий. Календарь показывает реальную активность по дням."
         actions={
           snapshot ? (
             <Badge variant={snapshot.streak.today_active ? 'success' : 'outline'} className="h-7 px-2.5">
@@ -221,7 +221,7 @@ export function ProgressPage() {
                 <span>Решено задач: {snapshot.insights.exercises_solved}</span>
                 <span>Повторений карточек: {snapshot.insights.cards_reviewed}</span>
                 <span>Сдано тестов: {snapshot.insights.quizzes_passed}</span>
-                <span className="ml-auto text-fg-subtle">Все значения из локальной базы</span>
+                <span className="ml-auto text-fg-subtle">Все значения из базы аккаунта</span>
               </div>
             </div>
           </CardContent>

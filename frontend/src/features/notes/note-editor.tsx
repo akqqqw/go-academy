@@ -275,7 +275,7 @@ export function NoteEditor({ note, folders, onSaved, onDeleted, className }: Not
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
         title="Удалить заметку?"
-        description="Заметка и её теги будут удалены из локальной базы. Действие нельзя отменить."
+        description="Заметка и её теги будут удалены безвозвратно. Действие нельзя отменить."
         confirmLabel="Удалить"
         destructive
         onConfirm={() => onDeleted(note.id)}

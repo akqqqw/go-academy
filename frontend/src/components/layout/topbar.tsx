@@ -1,7 +1,9 @@
-import { Flame, Menu, Moon, Search, Sun } from 'lucide-react'
+import { Flame, LogOut, Menu, Moon, Search, Sun } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 
+import { useAuth } from '@/auth/auth-context'
 import { Button } from '@/components/ui/button'
 import { Tooltip } from '@/components/ui/tooltip'
 import { sectionTitle } from '@/lib/nav'
@@ -22,6 +24,8 @@ export function Topbar({
   const update = useSettingsStore((state) => state.update)
   const { data } = useDashboard()
   const streak = data?.snapshot.streak.current ?? 0
+  const { user, signOut } = useAuth()
+  const [signingOut, setSigningOut] = useState(false)
 
   const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
   const prefersDark =
@@ -92,6 +96,22 @@ export function Topbar({
             className="border border-line bg-surface/70"
           >
             {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </Button>
+        </Tooltip>
+
+        <Tooltip content={user?.email ? `Выйти (${user.email})` : 'Выйти'} side="bottom">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Выйти из аккаунта"
+            disabled={signingOut}
+            onClick={() => {
+              setSigningOut(true)
+              void signOut().finally(() => setSigningOut(false))
+            }}
+            className="border border-line bg-surface/70"
+          >
+            <LogOut className="size-4" />
           </Button>
         </Tooltip>
       </div>

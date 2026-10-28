@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { backupsFixture, metaFixture, settingsFixture } from '@/test/fixtures'
+import { metaFixture, settingsFixture } from '@/test/fixtures'
 import { mockFetch, renderWithProviders } from '@/test/utils'
 import { useSettingsStore } from '@/store/settings'
 
@@ -18,7 +18,6 @@ describe('SettingsPage', () => {
     const fetchMock = mockFetch({
       '/api/settings': { settings: { ...settingsFixture, theme: 'light' } },
       '/api/meta': metaFixture,
-      '/api/backups': backupsFixture,
     })
 
     renderWithProviders(<SettingsPage />)
@@ -37,16 +36,16 @@ describe('SettingsPage', () => {
     expect(useSettingsStore.getState().settings.theme).toBe('light')
   })
 
-  it('показывает путь к базе и резервные копии', async () => {
+  it('показывает облачное хранилище и версию схемы', async () => {
     mockFetch({
       '/api/settings': { settings: settingsFixture },
       '/api/meta': metaFixture,
-      '/api/backups': backupsFixture,
     })
     renderWithProviders(<SettingsPage />)
 
-    expect(await screen.findByText(metaFixture.storage.db_path)).toBeInTheDocument()
-    expect(await screen.findByText('academy-20261026-120000.db')).toBeInTheDocument()
+    expect(await screen.findByText('Supabase Postgres')).toBeInTheDocument()
+    expect(screen.getByText('Резервные копии')).toBeInTheDocument()
+    expect(screen.getByText(/Project Settings → Database → Backups/)).toBeInTheDocument()
     expect(screen.getByText(/1 модулей|14 модулей/)).toBeTruthy()
   })
 
@@ -58,9 +57,6 @@ describe('SettingsPage', () => {
         const url = String(input)
         if (url.includes('/api/meta')) {
           return new Response(JSON.stringify(metaFixture), { status: 200 })
-        }
-        if (url.includes('/api/backups')) {
-          return new Response(JSON.stringify(backupsFixture), { status: 200 })
         }
         return new Response(
           JSON.stringify({ error: { code: 'validation_error', message: 'некорректные значения' } }),

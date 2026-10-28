@@ -75,18 +75,14 @@ func (q *Quizzes) SaveAttempt(ctx context.Context, quizID, moduleID string, scor
 		return QuizAttempt{}, err
 	}
 
-	result, err := q.db.ExecContext(ctx, `
+	result, err := q.db.InsertID(ctx, `
 		INSERT INTO quiz_attempts (quiz_id, module_id, score, total, duration_ms, created_at, answers)
 		VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		quizID, moduleID, score, total, durationMS, database.Now(), string(rawAnswers))
 	if err != nil {
 		return QuizAttempt{}, fmt.Errorf("сохранить попытку: %w", err)
 	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		return QuizAttempt{}, err
-	}
-	return q.attemptByID(ctx, id)
+	return q.attemptByID(ctx, result)
 }
 
 func (q *Quizzes) attemptByID(ctx context.Context, id int64) (QuizAttempt, error) {

@@ -125,7 +125,7 @@ func (f *Flashcards) Sync(ctx context.Context) (int, error) {
 	}
 	now := database.Now()
 
-	tx, err := f.db.BeginTx(ctx, nil)
+	tx, err := f.db.Begin(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -140,7 +140,7 @@ func (f *Flashcards) Sync(ctx context.Context) (int, error) {
 				INSERT INTO flashcards (id, deck_id, front, back, hint, ease, interval_days,
 					repetitions, lapses, due_at, custom, created_at, updated_at)
 				VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0, ?, 0, ?, ?)
-				ON CONFLICT(id) DO UPDATE SET
+				ON CONFLICT(user_id, id) DO UPDATE SET
 					deck_id = excluded.deck_id,
 					front = excluded.front,
 					back = excluded.back,
@@ -412,7 +412,7 @@ func (f *Flashcards) Queue(ctx context.Context, deckID string, limit int) ([]Fla
 		FROM flashcards c
 		LEFT JOIN card_reviews r ON r.card_id = c.id
 		` + where + `
-		GROUP BY c.id
+		GROUP BY c.user_id, c.id
 		ORDER BY c.due_at IS NULL, c.due_at, c.id
 		LIMIT ?`
 	rows, err := f.db.QueryContext(ctx, query, append(args, limit)...)
@@ -436,7 +436,7 @@ func (f *Flashcards) Queue(ctx context.Context, deckID string, limit int) ([]Fla
 func (f *Flashcards) Get(ctx context.Context, id string) (Flashcard, error) {
 	rows, err := f.db.QueryContext(ctx, `SELECT `+cardColumns+`
 		FROM flashcards c LEFT JOIN card_reviews r ON r.card_id = c.id
-		WHERE c.id = ? GROUP BY c.id`, id)
+		WHERE c.id = ? GROUP BY c.user_id, c.id`, id)
 	if err != nil {
 		return Flashcard{}, err
 	}
@@ -463,7 +463,7 @@ func (f *Flashcards) Review(ctx context.Context, id, grade string) (Flashcard, e
 		return Flashcard{}, err
 	}
 
-	tx, err := f.db.BeginTx(ctx, nil)
+	tx, err := f.db.Begin(ctx)
 	if err != nil {
 		return Flashcard{}, err
 	}
@@ -593,7 +593,7 @@ func (f *Flashcards) DeleteCard(ctx context.Context, id string) error {
 	if !card.Custom {
 		return ErrCardLocked
 	}
-	tx, err := f.db.BeginTx(ctx, nil)
+	tx, err := f.db.Begin(ctx)
 	if err != nil {
 		return err
 	}
@@ -612,7 +612,7 @@ func (f *Flashcards) ResetDeck(ctx context.Context, deckID string) (int, error) 
 	if _, ok := f.store.Deck(deckID); !ok {
 		return 0, ErrDeckNotFound
 	}
-	tx, err := f.db.BeginTx(ctx, nil)
+	tx, err := f.db.Begin(ctx)
 	if err != nil {
 		return 0, err
 	}

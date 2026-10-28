@@ -189,7 +189,7 @@ export function Sidebar({
                   saving ? 'animate-pulse-soft bg-warning' : 'bg-success',
                 )}
               />
-              {saving ? 'сохраняем…' : 'данные локально'}
+              {saving ? 'сохраняем…' : 'данные в аккаунте'}
             </span>
           )}
           <button

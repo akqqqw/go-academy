@@ -1,4 +1,4 @@
-// Типы данных, которые возвращает локальный Go-API.
+// Типы данных, которые возвращает Go-API.
 // Имена полей совпадают с JSON-тегами бэкенда.
 
 export type ThemePreference = 'dark' | 'light' | 'system'
@@ -360,19 +360,14 @@ export interface SearchResponse {
   count: number
 }
 
-export interface BackupInfo {
-  name: string
-  path: string
-  size_bytes: number
-  created_at: string
-}
-
 export interface Meta {
   app: { name: string; version: string; stage: number; stage_label: string }
   runtime: { go: string; os: string; arch: string; started_at: string; uptime_seconds: number }
   storage: {
     data_dir: string
     db_path: string
+    driver: 'sqlite' | 'postgres'
+    remote: boolean
     db_size_bytes: number
     schema_version: number
     backups: number

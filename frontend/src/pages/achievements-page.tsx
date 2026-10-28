@@ -124,7 +124,7 @@ export function AchievementsPage() {
       <PageHeader
         eyebrow="Мотивация"
         title="Достижения"
-        description="Награды за уроки, задачи, повторения карточек, тесты и регулярность. Прогресс считается из локальной базы, без ручных отметок."
+        description="Награды за уроки, задачи, повторения карточек, тесты и регулярность. Прогресс считается из данных аккаунта, без ручных отметок."
         actions={
           stats ? (
             <div className="flex flex-wrap items-center gap-2">

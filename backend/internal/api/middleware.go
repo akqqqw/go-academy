@@ -1,10 +1,16 @@
 package api
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
 	"runtime/debug"
 	"strings"
 	"time"
+
+	"goacademy/internal/auth"
+	"goacademy/internal/database"
+	"goacademy/internal/storage"
 )
 
 // statusRecorder запоминает код ответа для логов.
@@ -61,6 +67,117 @@ func (s *Server) withRecover(next http.Handler) http.Handler {
 	})
 }
 
+// withAuth требует валидный Supabase access-токен для всех API-запросов,
+// кроме healthcheck. Статика и SPA остаются публичными: без них не загрузится
+// даже страница входа.
+func (s *Server) withAuth(next http.Handler) http.Handler {
+	if !s.cfg.RequireAuth {
+		return next
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/api/") || r.URL.Path == "/api/health" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if s.verifier == nil {
+			writeError(w, http.StatusServiceUnavailable, "auth_not_configured",
+				"вход не настроен: задайте SUPABASE_URL и SUPABASE_ANON_KEY")
+			return
+		}
+
+		token := auth.BearerToken(r)
+		if token == "" {
+			w.Header().Set("WWW-Authenticate", "Bearer")
+			writeError(w, http.StatusUnauthorized, "unauthorized", "требуется вход в аккаунт")
+			return
+		}
+
+		user, err := s.verifier.Verify(r.Context(), token)
+		if err != nil {
+			if errors.Is(err, auth.ErrInvalidToken) {
+				w.Header().Set("WWW-Authenticate", "Bearer error=\"invalid_token\"")
+				writeError(w, http.StatusUnauthorized, "invalid_token", "сессия истекла, войдите снова")
+				return
+			}
+			s.log.Warn("проверка токена Supabase не удалась", "err", err)
+			writeError(w, http.StatusServiceUnavailable, "auth_unavailable",
+				"сервис авторизации временно недоступен")
+			return
+		}
+
+		s.withUserDB(next).ServeHTTP(w, r.WithContext(auth.WithUser(r.Context(), user)))
+	})
+}
+
+// withUserDB открывает транзакцию Postgres от имени пользователя: роль
+// authenticated + JWT-claims, поэтому RLS автоматически фильтрует данные.
+// Для SQLite (тесты и режим без входа) middleware ничего не делает.
+func (s *Server) withUserDB(next http.Handler) http.Handler {
+	if !s.db.IsPostgres() {
+		return next
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, ok := auth.UserFromContext(r.Context())
+		if !ok {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		claims, err := json.Marshal(map[string]string{
+			"sub":   user.ID,
+			"email": user.Email,
+			"role":  "authenticated",
+		})
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "auth_error", "не удалось сформировать claims")
+			return
+		}
+
+		tx, err := s.db.RequestTx(r.Context(), string(claims))
+		if err != nil {
+			s.log.Error("не удалось открыть транзакцию пользователя", "err", err)
+			writeError(w, http.StatusServiceUnavailable, "db_error", "база данных временно недоступна")
+			return
+		}
+		ctx := database.WithTx(r.Context(), tx)
+
+		created, err := storage.BootstrapUser(ctx, s.db, user.Email)
+		if err != nil {
+			_ = tx.Rollback()
+			s.log.Error("не удалось подготовить профиль пользователя", "err", err, "user", user.ID)
+			writeError(w, http.StatusInternalServerError, "bootstrap_error", "не удалось подготовить аккаунт")
+			return
+		}
+		if created {
+			if _, err := s.flashcards.Sync(ctx); err != nil {
+				_ = tx.Rollback()
+				s.log.Error("не удалось синхронизировать карточки пользователя", "err", err, "user", user.ID)
+				writeError(w, http.StatusInternalServerError, "bootstrap_error", "не удалось подготовить карточки")
+				return
+			}
+		}
+
+		recorder := &statusRecorder{ResponseWriter: w}
+		completed := false
+		defer func() {
+			if !completed {
+				_ = tx.Rollback()
+			}
+		}()
+
+		next.ServeHTTP(recorder, r.WithContext(ctx))
+		completed = true
+
+		if recorder.status >= http.StatusBadRequest {
+			_ = tx.Rollback()
+			return
+		}
+		if err := tx.Commit(); err != nil {
+			s.log.Error("не удалось зафиксировать транзакцию пользователя", "err", err, "user", user.ID)
+		}
+	})
+}
+
 // withSecurityHeaders добавляет базовые заголовки безопасности.
 // X-Frame-Options намеренно не выставляется: приложение должно открываться
 // во встроенном preview-окне и локальных iframe-панелях.
@@ -72,7 +189,7 @@ func withSecurityHeaders(next http.Handler) http.Handler {
 		header.Set("Content-Security-Policy",
 			"default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; "+
 				"style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; "+
-				"worker-src 'self' blob:; connect-src 'self'")
+				"worker-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -89,7 +206,7 @@ func (s *Server) withCORS(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 			w.Header().Set("Access-Control-Max-Age", "600")
 		}
 		if r.Method == http.MethodOptions {

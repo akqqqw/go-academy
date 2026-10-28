@@ -345,7 +345,7 @@ export function CodeWorkbench({
 
         <span className="mx-0.5 h-5 w-px bg-line" aria-hidden />
 
-        <Tooltip side="bottom" content="Сохранить черновик в локальную базу (Ctrl+S)">
+        <Tooltip side="bottom" content="Сохранить черновик в аккаунте (Ctrl+S)">
           <Button size="sm" variant="ghost" onClick={() => void save()}>
             {draft.state === 'saving' ? <Loader2 className="animate-spin" /> : <Save />}
             Сохранить

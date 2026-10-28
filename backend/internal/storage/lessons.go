@@ -32,7 +32,7 @@ func (l *Lessons) Open(ctx context.Context, moduleID, lessonID, title string) (L
 	_, err := l.db.ExecContext(ctx, `
 		INSERT INTO lessons (id, module_id, title, status, last_opened_at, updated_at)
 		VALUES (?, ?, ?, 'in_progress', ?, ?)
-		ON CONFLICT(id) DO UPDATE SET
+		ON CONFLICT(user_id, id) DO UPDATE SET
 			title = excluded.title,
 			module_id = excluded.module_id,
 			last_opened_at = excluded.last_opened_at,
@@ -51,7 +51,7 @@ func (l *Lessons) Complete(ctx context.Context, moduleID, lessonID, title string
 	_, err := l.db.ExecContext(ctx, `
 		INSERT INTO lessons (id, module_id, title, status, last_opened_at, completed_at, updated_at)
 		VALUES (?, ?, ?, 'completed', ?, ?, ?)
-		ON CONFLICT(id) DO UPDATE SET
+		ON CONFLICT(user_id, id) DO UPDATE SET
 			title = excluded.title,
 			module_id = excluded.module_id,
 			status = 'completed',

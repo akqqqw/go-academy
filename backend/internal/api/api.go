@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"goacademy/internal/auth"
 	"goacademy/internal/cards"
 	"goacademy/internal/config"
 	"goacademy/internal/course"
@@ -44,6 +45,7 @@ type Server struct {
 	exercises    *practice.Store
 	runner       *runner.Runner
 	static       *static.Handler
+	verifier     *auth.Verifier
 	started      time.Time
 	handler      http.Handler
 	// routeMethods хранит методы для каждого пути: нужно, чтобы отвечать 405,
@@ -83,22 +85,27 @@ func New(cfg config.Config, db *database.DB, logger *slog.Logger) *Server {
 		routeMethods: map[string][]string{},
 	}
 	s.exercises = practice.NewStore(cfg.ContentDir, s.course)
-	// Колоды карточек читаются из контента, прогресс повторений — в SQLite.
+	// Колоды карточек читаются из контента, прогресс повторений — в Supabase.
 	s.cardDecks = cards.NewStore(cfg.ContentDir)
 	if err := s.cardDecks.Reload(); err != nil {
 		s.log.Warn("колоды карточек не загружены", "error", err)
 	}
 	s.flashcards = storage.NewFlashcards(db, s.cardDecks)
 	s.quizAttempts = storage.NewQuizzes(db)
-	if _, err := s.flashcards.Sync(context.Background()); err != nil {
-		s.log.Warn("карточки не синхронизированы с базой", "error", err)
+	if !db.IsPostgres() {
+		if _, err := s.flashcards.Sync(context.Background()); err != nil {
+			s.log.Warn("карточки не синхронизированы с базой", "error", err)
+		}
 	}
-	// Викторины тоже читаются из content/; прогресс попыток — в SQLite.
+	// Викторины тоже читаются из content/; прогресс попыток — в Supabase.
 	s.quizStore = quizzes.NewStore(cfg.ContentDir)
 	if err := s.quizStore.Reload(); err != nil {
 		s.log.Warn("викторины не загружены", "error", err)
 	}
 	s.achievements = storage.NewAchievements(db, activity, s.notes)
+	if cfg.SupabaseURL != "" && cfg.SupabaseKey != "" {
+		s.verifier = auth.NewVerifier(cfg.SupabaseURL, cfg.SupabaseKey)
+	}
 	s.handler = s.routes()
 	return s
 }
@@ -199,7 +206,7 @@ func (s *Server) routes() http.Handler {
 	// Всё остальное — статика SPA.
 	mux.Handle("/", s.static)
 
-	return withSecurityHeaders(s.withRecover(s.withCORS(s.withLogging(mux))))
+	return withSecurityHeaders(s.withRecover(s.withCORS(s.withLogging(s.withAuth(mux)))))
 }
 
 // handle регистрирует маршрут и запоминает допустимые методы.

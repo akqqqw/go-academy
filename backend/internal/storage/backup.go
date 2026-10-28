@@ -33,6 +33,9 @@ func NewBackups(db *database.DB, dataDir string) *Backups {
 
 // CreateBackup делает копию базы и возвращает её описание.
 func (b *Backups) CreateBackup(ctx context.Context) (Backup, error) {
+	if b.db.IsPostgres() {
+		return Backup{}, fmt.Errorf("резервные копии Supabase настраиваются в панели Supabase")
+	}
 	if err := os.MkdirAll(b.dir, 0o755); err != nil {
 		return Backup{}, fmt.Errorf("создать каталог копий: %w", err)
 	}
@@ -50,6 +53,9 @@ func (b *Backups) CreateBackup(ctx context.Context) (Backup, error) {
 
 // List возвращает резервные копии (новые сначала).
 func (b *Backups) List() ([]Backup, error) {
+	if b.db.IsPostgres() {
+		return []Backup{}, nil
+	}
 	entries, err := os.ReadDir(b.dir)
 	if err != nil {
 		if os.IsNotExist(err) {

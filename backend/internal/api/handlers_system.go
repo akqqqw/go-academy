@@ -35,6 +35,8 @@ type runtimeInfo struct {
 type storageInfo struct {
 	DataDir       string `json:"data_dir"`
 	DBPath        string `json:"db_path"`
+	Driver        string `json:"driver"`
+	Remote        bool   `json:"remote"`
 	DBSizeBytes   int64  `json:"db_size_bytes"`
 	SchemaVersion int    `json:"schema_version"`
 	Backups       int    `json:"backups"`
@@ -113,6 +115,8 @@ func (s *Server) handleMeta(w http.ResponseWriter, r *http.Request) {
 		Storage: storageInfo{
 			DataDir:       s.cfg.DataDir,
 			DBPath:        s.db.Path,
+			Driver:        s.db.Driver(),
+			Remote:        s.db.IsPostgres(),
 			DBSizeBytes:   s.db.Size(),
 			SchemaVersion: schemaVersion,
 			Backups:       len(backups),
@@ -228,6 +232,11 @@ func (s *Server) handleBackupsList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleBackupDownload(w http.ResponseWriter, r *http.Request) {
+	if s.db.IsPostgres() {
+		writeError(w, http.StatusNotImplemented, "backup_unsupported",
+			"в Supabase резервные копии делаются автоматически в панели проекта")
+		return
+	}
 	backup, err := s.backups.CreateBackup(r.Context())
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "backup_error", err.Error())
