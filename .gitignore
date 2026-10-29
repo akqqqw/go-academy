@@ -12,6 +12,9 @@ backend/go.sum.lock
 dist/
 build/
 
+# Vercel CLI: привязка каталога к проекту (создаётся `vercel link`)
+.vercel/
+
 # local data & runtime
 data/
 *.db

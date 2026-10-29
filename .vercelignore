@@ -1,0 +1,12 @@
+# Что не нужно загружать на Vercel при деплое через CLI.
+# Всё перечисленное — локальные артефакты: на платформе они создаются заново.
+frontend/node_modules/
+frontend/dist/
+backend/bin/
+backend/server
+.vercel/
+data/
+tmp/
+*.db
+*.db-shm
+*.db-wal

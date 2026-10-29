@@ -213,7 +213,10 @@ go-academy/
 │   ├── package.json
 │   └── vite.config.ts
 ├── data/                      # локальная SQLite только для тестов/отладки без аккаунтов
+├── docs/vercel.md              # пошаговый чек-лист деплоя на Vercel
 ├── scripts/                   # dev.sh и build.sh
+├── vercel.json                # два сервиса, маршрутизация API и SPA
+├── .vercelignore              # что не загружать при деплое через CLI
 ├── Makefile
 └── README.md
 ```
@@ -699,6 +702,10 @@ Frontend читает `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` **на э�
 статика на Vite и Go-сервер. Конфигурация целиком лежит в `vercel.json` в корне
 репозитория; проверяется тестом `backend/internal/deploy/vercel_test.go`.
 
+Пошаговый чек-лист (настройка Supabase и Supabase Auth, импорт проекта,
+переменные окружения, CLI, проверка после деплоя, диагностика) вынесен в
+**[docs/vercel.md](docs/vercel.md)**. Ниже — как всё устроено.
+
 ```json
 {
   "services": {
@@ -732,15 +739,27 @@ Frontend читает `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` **на э�
 захардкожен: в dev-режиме его подставляет прокси Vite (`GOACADEMY_API`, при
 `vercel dev` — `BACKEND_URL`), в продакшене — правило маршрутизации Vercel.
 
-**Переменные окружения в Vercel.** Задайте их для обоих сервисов:
+**Переменные окружения в Vercel.** Они задаются на уровне проекта (в режиме
+сервисов они общие для обоих сервисов) и различаются только тем, кто их читает:
 
-| Сервис | Переменные |
+| Кто читает | Переменные |
 | --- | --- |
-| `backend` | `SUPABASE_DB_URL` (Session pooler), `PUBLIC_KEY` (publishable key) |
-| `frontend` | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` |
+| `backend` (runtime) | `SUPABASE_DB_URL` (Session pooler), `PUBLIC_KEY` (publishable key) |
+| `frontend` (сборка) | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` |
 
 `VITE_*` встраиваются в статику на этапе `npm run build`, поэтому после изменения
-ключа фронтенд нужно пересобрать. Секреты БД не попадают в клиентский бандл.
+ключа фронтенд нужно пересобрать (Vercel пересобирает проект при новом деплое).
+Секреты БД не попадают в клиентский бандл.
+
+**Домены в Supabase Auth.** В **Authentication → URL Configuration** укажите Site
+URL `https://<project>.vercel.app` и Redirect URLs для продакшн-домена, превью
+`https://*-<team>.vercel.app/**` и `http://localhost:5173/**` — иначе ссылки из
+писем (подтверждение адреса, сброс пароля) будут вести на `localhost`.
+
+**Root Directory.** При импорте проекта оставьте корень репозитория: `vercel.json`
+читается только оттуда, а каталоги сервисов заданы внутри него. Для деплоя через
+CLI локальные артефакты (`node_modules`, `dist`, `data/`, `*.db`) исключены
+файлом `.vercelignore`, а каталог `.vercel/` после `vercel link` не попадает в git.
 
 Что сделано в коде под serverless:
 
