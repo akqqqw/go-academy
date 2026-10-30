@@ -15,8 +15,44 @@ const API_TARGET =
   process.env.BACKEND_URL ??
   'http://127.0.0.1:8080'
 
+// Параметры Supabase попадают в статику на этапе сборки. Кроме обычных
+// VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY принимаем имена, которые уже есть в
+// окружении проекта на Vercel: в режиме сервисов переменные задаются на уровне
+// проекта, поэтому сервис frontend видит SUPABASE_URL и PUBLIC_KEY (либо
+// SUPABASE_ANON_KEY). Так деплой работает даже если VITE_* не завели.
+// Значения всё равно публичные: тот же ключ отдаёт GET /api/config.js, а данные
+// защищают RLS и проверка токена на сервере.
+// Адрес проекта Supabase выводится из строки подключения postgres.<ref>@...
+// так же, как это делает backend: SUPABASE_URL может быть не задан отдельно,
+// а CONNECTION_URL/SUPABASE_DB_URL на проекте точно есть.
+function supabaseURLFromDatabase(databaseURL: string | undefined): string {
+  if (!databaseURL) return ''
+  try {
+    const username = decodeURIComponent(new URL(databaseURL).username)
+    const ref = username.startsWith('postgres.') ? username.slice('postgres.'.length) : ''
+    return ref ? `https://${ref}.supabase.co` : ''
+  } catch {
+    return ''
+  }
+}
+
+const SUPABASE_URL =
+  process.env.VITE_SUPABASE_URL ??
+  process.env.SUPABASE_URL ??
+  supabaseURLFromDatabase(process.env.SUPABASE_DB_URL ?? process.env.CONNECTION_URL)
+const SUPABASE_ANON_KEY =
+  process.env.VITE_SUPABASE_ANON_KEY ??
+  process.env.SUPABASE_ANON_KEY ??
+  process.env.PUBLIC_KEY ??
+  ''
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  define: {
+    // Подстановка в исходный код: приложение читает import.meta.env как обычно.
+    'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(SUPABASE_URL),
+    'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(SUPABASE_ANON_KEY),
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
