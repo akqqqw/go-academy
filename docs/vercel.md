@@ -72,8 +72,8 @@ backend, отдельно применять SQL не нужно.
 | --- | --- | --- |
 | `SUPABASE_DB_URL` | строка подключения Session pooler | backend (runtime) |
 | `PUBLIC_KEY` | publishable/anon key | backend (проверка токенов) |
-| `VITE_SUPABASE_URL` | `https://<ref>.supabase.co` | frontend (встраивается при сборке) |
-| `VITE_SUPABASE_ANON_KEY` | publishable/anon key | frontend (встраивается при сборке) |
+| `VITE_SUPABASE_URL` | `https://<ref>.supabase.co` | frontend (необязательно: адрес выводится из `CONNECTION_URL`) |
+| `VITE_SUPABASE_ANON_KEY` | publishable/anon key | frontend (необязательно: берётся `PUBLIC_KEY`) |
 
 Необязательные: `SUPABASE_URL` (выводится из `postgres.<ref>` в строке
 подключения), `SUPABASE_ANON_KEY` (алиас `PUBLIC_KEY`), `CONNECTION_URL` (алиас
@@ -89,12 +89,16 @@ backend, отдельно применять SQL не нужно.
 
 5. Нажмите **Deploy**.
 
-Если `VITE_*` забыть, приложение не станет мёртвым: `index.html` подключает
-`<script src="/api/config.js">`, и бэкенд отдаёт `window.__GO_ACADEMY_CONFIG__`
-с адресом Supabase и publishable key (`SUPABASE_URL` + `PUBLIC_KEY`) синхронно,
-до загрузки модулей. Пересобирать фронтенд в этом случае не нужно — достаточно,
-чтобы значения были у сервиса `backend`. Свои `VITE_*` всё равно полезны: они
-убирают лишний запрос и делают сборку автономной.
+Если `VITE_*` забыть, приложение не станет мёртвым — есть два уровня подстраховки:
+
+- `vite.config.ts` на этапе сборки подставляет в бандл `SUPABASE_URL` (или адрес,
+  выведенный из `CONNECTION_URL`/`SUPABASE_DB_URL`) и `PUBLIC_KEY`, потому что
+  переменные проекта видны всем сервисам;
+- `index.html` подключает `<script src="/api/config.js">`, и бэкенд отдаёт
+  `window.__GO_ACADEMY_CONFIG__` синхронно, до загрузки модулей приложения.
+
+Свои `VITE_*` всё равно полезны: они убирают лишний запрос и делают сборку
+автономной.
 
 ## 4. Деплой через CLI (альтернатива панели)
 
