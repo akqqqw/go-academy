@@ -70,7 +70,7 @@ func (s *Server) withRecover(next http.Handler) http.Handler {
 // isPublicPath сообщает, что эндпоинт доступен без токена: healthcheck для
 // платформы и конфигурация Supabase, без которой браузер не сможет войти.
 func isPublicPath(path string) bool {
-	return path == "/api/health" || path == "/api/config"
+	return path == "/api/health" || path == "/api/config" || path == "/api/config.js"
 }
 
 // withAuth требует валидный Supabase access-токен для всех API-запросов, кроме

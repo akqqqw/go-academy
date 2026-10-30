@@ -89,11 +89,12 @@ backend, отдельно применять SQL не нужно.
 
 5. Нажмите **Deploy**.
 
-Если `VITE_*` забыть, приложение не станет мёртвым: фронтенд запросит
-`GET /api/config` и возьмёт адрес Supabase и publishable key из ответа бэкенда
-(`SUPABASE_URL` + `PUBLIC_KEY`). Пересобирать фронтенд в этом случае не нужно —
-достаточно, чтобы значения были у сервиса `backend`. Свои `VITE_*` всё равно
-полезны: они экономят лишний запрос и делают сборку автономной.
+Если `VITE_*` забыть, приложение не станет мёртвым: `index.html` подключает
+`<script src="/api/config.js">`, и бэкенд отдаёт `window.__GO_ACADEMY_CONFIG__`
+с адресом Supabase и publishable key (`SUPABASE_URL` + `PUBLIC_KEY`) синхронно,
+до загрузки модулей. Пересобирать фронтенд в этом случае не нужно — достаточно,
+чтобы значения были у сервиса `backend`. Свои `VITE_*` всё равно полезны: они
+убирают лишний запрос и делают сборку автономной.
 
 ## 4. Деплой через CLI (альтернатива панели)
 
@@ -123,6 +124,9 @@ curl -sS https://<project>.vercel.app/api/health
 
 curl -sS https://<project>.vercel.app/api/config
 # {"supabase_url":"https://<ref>.supabase.co","supabase_anon_key":"sb_publishable_…","auth_required":true}
+
+curl -sS https://<project>.vercel.app/api/config.js
+# window.__GO_ACADEMY_CONFIG__={"supabase_url":"…","supabase_anon_key":"…","auth_required":true};
 ```
 
 Если `/api/config` отдаёт пустые значения, страница входа покажет «Supabase не
@@ -187,7 +191,7 @@ Supabase работает; `degraded` и код 503 — база недосту�
 
 | Симптом | Причина и что делать |
 | --- | --- |
-| `/api/config` отдаёт пустые `supabase_url`/`supabase_anon_key`, страница входа пишет «Supabase не настроен» | у сервиса `backend` не заданы `SUPABASE_URL` и `PUBLIC_KEY` (ключ выводится из строки подключения `postgres.<ref>`, если задан только `SUPABASE_DB_URL`); задайте их и передеплойте |
+| `/api/config` или `/api/config.js` отдают пустые `supabase_url`/`supabase_anon_key`, страница входа пишет «Supabase не настроен» | у сервиса `backend` не заданы `SUPABASE_URL` и `PUBLIC_KEY` (ключ выводится из строки подключения `postgres.<ref>`, если задан только `SUPABASE_DB_URL`); задайте их и передеплойте |
 | `/api/health` → `degraded`, 503 | backend не видит базу: проверьте `SUPABASE_DB_URL` (Session pooler, пароль после reset), лимиты Supabase |
 | Все `/api/*` → 503 `auth_not_configured` | не задан `PUBLIC_KEY` (или `SUPABASE_ANON_KEY`) для сервиса backend |
 | Все `/api/*` → 401 `unauthorized` | нет сессии в браузере или `VITE_*` не попали в сборку — фронтенд не смог войти |

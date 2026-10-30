@@ -23,6 +23,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <!--
+      Конфигурация Supabase приходит синхронно, до модулей приложения: обычный
+      <script> отдаёт бэкенд (GET /api/config.js). Так вход работает и в сборке
+      без VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY. Если бэкенд недоступен,
+      скрипт молча не загрузится, а приложение покажет подсказку.
+    -->
+    <script src="/api/config.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

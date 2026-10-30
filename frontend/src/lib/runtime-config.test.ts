@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 // Модуль хранит состояние (запрошена ли конфигурация), поэтому в каждом тесте
 // берём его свежую копию через vi.resetModules().
@@ -8,6 +8,26 @@ async function freshModule() {
 }
 
 describe('runtime config', () => {
+  afterEach(() => {
+    delete window.__GO_ACADEMY_CONFIG__
+  })
+
+  it('берёт конфигурацию из синхронного скрипта без запроса к API', async () => {
+    window.__GO_ACADEMY_CONFIG__ = {
+      supabase_url: 'https://demo.supabase.co',
+      supabase_anon_key: 'sb_publishable_demo',
+      auth_required: true,
+    }
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const { loadRuntimeConfig, runtimeConfig } = await freshModule()
+
+    // Значение доступно сразу при загрузке модуля — до любых await.
+    expect(runtimeConfig()?.supabase_url).toBe('https://demo.supabase.co')
+    await expect(loadRuntimeConfig()).resolves.toEqual(window.__GO_ACADEMY_CONFIG__)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('превращает ошибку сети в null и не ломает приложение', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new Error('нет сети'))))
     const { loadRuntimeConfig, runtimeConfig } = await freshModule()
