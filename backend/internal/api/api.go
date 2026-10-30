@@ -121,6 +121,7 @@ func (s *Server) routes() http.Handler {
 
 	// Система.
 	s.handle(mux, http.MethodGet, "/api/health", s.handleHealth)
+	s.handle(mux, http.MethodGet, "/api/config", s.handlePublicConfig)
 	s.handle(mux, http.MethodGet, "/api/meta", s.handleMeta)
 
 	// Главная страница.

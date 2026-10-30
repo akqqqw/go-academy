@@ -103,6 +103,66 @@ func TestHealth(t *testing.T) {
 	}
 }
 
+// TestPublicConfig проверяет, что параметры Supabase отдаются без токена: без
+// них страница входа не сможет даже отправить запрос, а остальные API остаются
+// закрытыми.
+func TestPublicConfig(t *testing.T) {
+	dir := t.TempDir()
+	db, err := database.Open(filepath.Join(dir, "test.db"))
+	if err != nil {
+		t.Fatalf("открыть базу: %v", err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+
+	cfg := config.Config{
+		Addr:        "127.0.0.1:0",
+		DataDir:     dir,
+		ContentDir:  filepath.Join("..", "..", "..", "content"),
+		FrontendDir: filepath.Join(dir, "dist"),
+		SupabaseURL: "https://demo.supabase.co",
+		SupabaseKey: "sb_publishable_demo",
+		RequireAuth: true,
+	}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	httpServer := httptest.NewServer(New(cfg, db, logger).Handler())
+	t.Cleanup(httpServer.Close)
+	client := httpServer.Client()
+
+	get := func(path string) (*http.Response, []byte) {
+		t.Helper()
+		resp, err := client.Get(httpServer.URL + path)
+		if err != nil {
+			t.Fatalf("GET %s: %v", path, err)
+		}
+		defer resp.Body.Close()
+		payload, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return resp, payload
+	}
+
+	resp, payload := get("/api/config")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("статус = %d: %s", resp.StatusCode, truncate(string(payload)))
+	}
+	body := decode(t, payload)
+	if body["supabase_url"] != "https://demo.supabase.co" {
+		t.Errorf("supabase_url = %v", body["supabase_url"])
+	}
+	if body["supabase_anon_key"] != "sb_publishable_demo" {
+		t.Errorf("supabase_anon_key = %v", body["supabase_anon_key"])
+	}
+	if body["auth_required"] != true {
+		t.Errorf("auth_required = %v", body["auth_required"])
+	}
+
+	// Публичная конфигурация не открывает остальной API.
+	if resp, _ := get("/api/meta"); resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("/api/meta без токена: статус = %d, ожидался 401", resp.StatusCode)
+	}
+}
+
 func TestCourseEndpoint(t *testing.T) {
 	env := newTestEnv(t)
 	resp, payload := env.do(t, http.MethodGet, "/api/course", nil)
