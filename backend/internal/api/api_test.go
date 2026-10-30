@@ -157,6 +157,30 @@ func TestPublicConfig(t *testing.T) {
 		t.Errorf("auth_required = %v", body["auth_required"])
 	}
 
+	// Та же конфигурация как JavaScript для <script> в index.html: фронтенд
+	// получает значения синхронно, до загрузки модулей.
+	resp, payload = get("/api/config.js")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("/api/config.js: статус = %d", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "application/javascript") {
+		t.Errorf("/api/config.js: Content-Type = %q", ct)
+	}
+	script := string(payload)
+	for _, want := range []string{
+		"window.__GO_ACADEMY_CONFIG__=",
+		`"supabase_url":"https://demo.supabase.co"`,
+		`"supabase_anon_key":"sb_publishable_demo"`,
+	} {
+		if !strings.Contains(script, want) {
+			t.Errorf("/api/config.js не содержит %q: %s", want, truncate(script))
+		}
+	}
+	// Секрет базы не должен утечь ни в один публичный ответ.
+	if strings.Contains(script, "SUPABASE_DB_URL") || strings.Contains(string(payload), "postgres://") {
+		t.Error("/api/config.js не должен содержать строку подключения к базе")
+	}
+
 	// Публичная конфигурация не открывает остальной API.
 	if resp, _ := get("/api/meta"); resp.StatusCode != http.StatusUnauthorized {
 		t.Errorf("/api/meta без токена: статус = %d, ожидался 401", resp.StatusCode)

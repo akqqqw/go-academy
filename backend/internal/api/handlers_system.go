@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"os"
 	"runtime"
@@ -107,6 +108,32 @@ func (s *Server) handlePublicConfig(w http.ResponseWriter, r *http.Request) {
 		SupabaseAnonKey: s.cfg.SupabaseKey,
 		AuthRequired:    s.cfg.RequireAuth,
 	})
+}
+
+// handlePublicConfigScript отдаёт ту же конфигурацию, но как JavaScript для
+// обычного <script src="/api/config.js"> в index.html.
+//
+// Отдельный эндпоинт нужен, чтобы фронтенд получал параметры Supabase
+// синхронно, до загрузки модулей: тогда клиент Supabase создаётся с готовыми
+// значениями без гонки с fetch и без top-level await. Содержимое то же, что у
+// /api/config, секретов нет.
+func (s *Server) handlePublicConfigScript(w http.ResponseWriter, r *http.Request) {
+	public := publicConfigResponse{
+		SupabaseURL:     s.cfg.SupabaseURL,
+		SupabaseAnonKey: s.cfg.SupabaseKey,
+		AuthRequired:    s.cfg.RequireAuth,
+	}
+	payload, err := json.Marshal(public)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "не удалось собрать конфигурацию")
+		return
+	}
+	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	// Конфигурация зависит от окружения сервиса: кэшировать её на CDN нельзя,
+	// иначе после смены ключа браузер продолжит получать старую.
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("window.__GO_ACADEMY_CONFIG__=" + string(payload) + ";\n"))
 }
 
 func (s *Server) handleMeta(w http.ResponseWriter, r *http.Request) {
