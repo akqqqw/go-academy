@@ -43,7 +43,7 @@ func (s *Server) withLogging(next http.Handler) http.Handler {
 		if recorder.status == 0 {
 			recorder.status = http.StatusOK
 		}
-		if strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api/health" {
+		if strings.HasPrefix(r.URL.Path, "/api/") && !isPublicPath(r.URL.Path) {
 			s.log.Info("http",
 				"method", r.Method,
 				"path", r.URL.Path,
@@ -67,15 +67,21 @@ func (s *Server) withRecover(next http.Handler) http.Handler {
 	})
 }
 
-// withAuth требует валидный Supabase access-токен для всех API-запросов,
-// кроме healthcheck. Статика и SPA остаются публичными: без них не загрузится
-// даже страница входа.
+// isPublicPath сообщает, что эндпоинт доступен без токена: healthcheck для
+// платформы и конфигурация Supabase, без которой браузер не сможет войти.
+func isPublicPath(path string) bool {
+	return path == "/api/health" || path == "/api/config"
+}
+
+// withAuth требует валидный Supabase access-токен для всех API-запросов, кроме
+// публичных (см. isPublicPath). Статика и SPA остаются публичными: без них не
+// загрузится даже страница входа.
 func (s *Server) withAuth(next http.Handler) http.Handler {
 	if !s.cfg.RequireAuth {
 		return next
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.URL.Path, "/api/") || r.URL.Path == "/api/health" {
+		if !strings.HasPrefix(r.URL.Path, "/api/") || isPublicPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}

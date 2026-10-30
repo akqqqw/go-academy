@@ -83,6 +83,32 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// publicConfigResponse — параметры Supabase, которые нужны браузеру, чтобы
+// подключиться к Auth. Публичный эндпоинт: без этих значений страница входа не
+// может даже отправить запрос.
+//
+// Ключ здесь — publishable/anon: он по определению попадает в клиентский бандл
+// (переменные VITE_* встраиваются при сборке), доступ к данным защищают RLS и
+// проверка токена на сервере. Секрет БД (SUPABASE_DB_URL) наружу не отдаётся.
+type publicConfigResponse struct {
+	SupabaseURL     string `json:"supabase_url"`
+	SupabaseAnonKey string `json:"supabase_anon_key"`
+	AuthRequired    bool   `json:"auth_required"`
+}
+
+// handlePublicConfig отдаёт конфигурацию фронтенда.
+//
+// Нужен для деплоев, где забыли VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY на
+// этапе сборки: фронтенд забирает значения отсюда в рантайме и работает так же,
+// как со встроенными переменными.
+func (s *Server) handlePublicConfig(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, publicConfigResponse{
+		SupabaseURL:     s.cfg.SupabaseURL,
+		SupabaseAnonKey: s.cfg.SupabaseKey,
+		AuthRequired:    s.cfg.RequireAuth,
+	})
+}
+
 func (s *Server) handleMeta(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	schemaVersion, err := s.db.SchemaVersion(ctx)

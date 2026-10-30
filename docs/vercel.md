@@ -89,6 +89,12 @@ backend, отдельно применять SQL не нужно.
 
 5. Нажмите **Deploy**.
 
+Если `VITE_*` забыть, приложение не станет мёртвым: фронтенд запросит
+`GET /api/config` и возьмёт адрес Supabase и publishable key из ответа бэкенда
+(`SUPABASE_URL` + `PUBLIC_KEY`). Пересобирать фронтенд в этом случае не нужно —
+достаточно, чтобы значения были у сервиса `backend`. Свои `VITE_*` всё равно
+полезны: они экономят лишний запрос и делают сборку автономной.
+
 ## 4. Деплой через CLI (альтернатива панели)
 
 ```bash
@@ -114,7 +120,13 @@ CLI загружает каталог целиком, поэтому локал�
 ```bash
 curl -sS https://<project>.vercel.app/api/health
 # {"status":"ok","version":"0.1.0","time":"..."}
+
+curl -sS https://<project>.vercel.app/api/config
+# {"supabase_url":"https://<ref>.supabase.co","supabase_anon_key":"sb_publishable_…","auth_required":true}
 ```
+
+Если `/api/config` отдаёт пустые значения, страница входа покажет «Supabase не
+настроен» — значит у сервиса `backend` нет `SUPABASE_URL` и `PUBLIC_KEY`.
 
 `/api/health` пингует базу: `status: "ok"` — схема применена, соединение с
 Supabase работает; `degraded` и код 503 — база недоступна (см. диагностику).
@@ -175,10 +187,11 @@ Supabase работает; `degraded` и код 503 — база недосту�
 
 | Симптом | Причина и что делать |
 | --- | --- |
+| `/api/config` отдаёт пустые `supabase_url`/`supabase_anon_key`, страница входа пишет «Supabase не настроен» | у сервиса `backend` не заданы `SUPABASE_URL` и `PUBLIC_KEY` (ключ выводится из строки подключения `postgres.<ref>`, если задан только `SUPABASE_DB_URL`); задайте их и передеплойте |
 | `/api/health` → `degraded`, 503 | backend не видит базу: проверьте `SUPABASE_DB_URL` (Session pooler, пароль после reset), лимиты Supabase |
 | Все `/api/*` → 503 `auth_not_configured` | не задан `PUBLIC_KEY` (или `SUPABASE_ANON_KEY`) для сервиса backend |
 | Все `/api/*` → 401 `unauthorized` | нет сессии в браузере или `VITE_*` не попали в сборку — фронтенд не смог войти |
-| Белый экран, в консоли `Supabase не настроен` | не заданы `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` на момент сборки; задайте и пересоберите (Redeploy) |
+| Белый экран, в консоли `Supabase не настроен` | не заданы ни `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` (сборка), ни `SUPABASE_URL`/`PUBLIC_KEY` (backend, `/api/config`); проверьте `curl https://<project>.vercel.app/api/config` |
 | 404 на `/learning/...`, `/practice`, `/settings` | сломаны `rewrites` в `vercel.json`; конфигурация проверяется тестом `backend/internal/deploy/vercel_test.go` |
 | `/api/*` отдаёт HTML фронтенда | правило `/api/(.*)` в корне `vercel.json` переставлено ниже catch-all; API-правило должно быть первым |
 | Сборка backend падает на `cp: cannot stat '../content'` | у сервиса неверный **Root Directory**; корень репозитория обязателен |

@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { supabase } from '@/lib/supabase'
+import { supabase, supabaseConfigHint } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 
 function AuthShell({
@@ -195,12 +195,7 @@ export function LoginPage() {
       }
     >
       <form className="space-y-3.5" onSubmit={onSubmit}>
-        {!configured ? (
-          <ErrorBox>
-            Supabase не настроен. Добавьте `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` в
-            `frontend/.env.local` и перезапустите dev-сервер.
-          </ErrorBox>
-        ) : null}
+        {!configured ? <ErrorBox>{supabaseConfigHint}</ErrorBox> : null}
         {message ? (
           <div className="rounded-lg border border-success/30 bg-success-soft px-3 py-2 text-[13px] text-success">
             {message}
@@ -315,12 +310,7 @@ export function RegisterPage() {
       }
     >
       <form className="space-y-3.5" onSubmit={onSubmit}>
-        {!configured ? (
-          <ErrorBox>
-            Supabase не настроен. Добавьте `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` в
-            `frontend/.env.local` и перезапустите dev-сервер.
-          </ErrorBox>
-        ) : null}
+        {!configured ? <ErrorBox>{supabaseConfigHint}</ErrorBox> : null}
         {error ? <ErrorBox>{error}</ErrorBox> : null}
 
         <label className="block space-y-1.5">
