@@ -58,12 +58,14 @@ func TestCalcStreakUsesProvidedTimezone(t *testing.T) {
 		t.Skip("нет tzdata для Europe/Moscow:", err)
 	}
 
-	// 23:30 по Москве — это ещё 20:30 UTC того же дня, но в UTC уже могли бы
-	// наступить следующие сутки при другом смещении.
+	// 23:30 по Москве — это ещё 20:30 UTC того же дня: «сегодня» должно
+	// считаться по московскому календарю, а не по UTC.
 	now := time.Date(2026, 5, 12, 23, 30, 0, 0, moscow)
+	// Активность приходит в UTC: 00:10 UTC 12 мая — это 03:10 по Москве
+	// (12-е), а 09:00 UTC 11 мая — 12:00 по Москве (11-е).
 	days := []time.Time{
 		time.Date(2026, 5, 12, 0, 10, 0, 0, time.UTC),
-		time.Date(2026, 5, 11, 22, 0, 0, 0, time.UTC),
+		time.Date(2026, 5, 11, 9, 0, 0, 0, time.UTC),
 	}
 
 	current, longest, todayActive := CalcStreak(days, now)
