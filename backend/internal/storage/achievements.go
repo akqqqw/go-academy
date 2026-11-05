@@ -351,7 +351,7 @@ func (a *Achievements) metrics(ctx context.Context) (map[string]int, error) {
 	if err != nil {
 		return nil, err
 	}
-	current, longest, _ := CalcStreak(days, time.Now())
+	current, longest, _ := CalcStreak(days, time.Now().In(database.Location()))
 	if current > longest {
 		out[MetricStreak] = current
 	} else {

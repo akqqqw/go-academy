@@ -180,7 +180,7 @@ func (s *Service) Snapshot(ctx context.Context, totals Totals) (Snapshot, error)
 	if err != nil {
 		return Snapshot{}, err
 	}
-	current, longest, todayActive := CalcStreak(activeDays, time.Now())
+	current, longest, todayActive := CalcStreak(activeDays, time.Now().In(database.Location()))
 
 	settings, err := s.settings.All(ctx)
 	if err != nil {

@@ -56,7 +56,8 @@ function NavRow({
       aria-label={item.label}
       className={({ isActive }) =>
         cn(
-          'group relative flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium transition-colors',
+          // На тач-устройствах строка выше: 44 px — минимум для пальца.
+          'group relative flex h-11 items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium transition-colors lg:h-9',
           collapsed && 'justify-center px-0',
           isActive
             ? 'bg-primary-soft text-primary'
@@ -134,7 +135,7 @@ export function Sidebar({
       >
         <div
           className={cn(
-            'flex h-14 items-center justify-between gap-2 border-b border-line px-3',
+            'flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center justify-between gap-2 border-b border-line px-3 pt-[env(safe-area-inset-top)]',
             compact && 'lg:justify-center lg:px-0',
           )}
         >
@@ -142,7 +143,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={onCloseMobile}
-            className="grid size-8 place-items-center rounded-md text-fg-subtle hover:bg-surface-muted hover:text-fg lg:hidden"
+            className="grid size-11 place-items-center rounded-md text-fg-subtle hover:bg-surface-muted hover:text-fg lg:hidden"
             aria-label="Закрыть навигацию"
           >
             <X className="size-4" />
@@ -177,7 +178,7 @@ export function Sidebar({
 
         <div
           className={cn(
-            'flex items-center gap-2 border-t border-line p-2',
+            'flex items-center gap-2 border-t border-line p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]',
             compact ? 'lg:justify-center' : 'justify-between',
           )}
         >

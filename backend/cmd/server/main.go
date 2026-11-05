@@ -37,6 +37,14 @@ func run(args []string) error {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
+	// Часовой пояс приложения: от него зависят «сегодня», дни активности и
+	// серия. В serverless-окружении процесс живёт в UTC, поэтому пояс задаётся
+	// явно (APP_TIMEZONE), а tzdata встроена в бинарник (см. database/time.go).
+	if err := database.SetLocation(cfg.Timezone); err != nil {
+		return err
+	}
+	logger.Info("часовой пояс приложения", "timezone", cfg.Timezone)
+
 	// На Vercel корневой content/ не попадает в сервис backend: контент встроен
 	// в бинарник и распаковывается в каталог данных (/tmp). Локально шаг
 	// пропускается — Materialize вернёт false.

@@ -733,6 +733,7 @@ curl -X POST http://127.0.0.1:8080/api/notes \
 | `SUPABASE_ANON_KEY` (алиас `PUBLIC_KEY`) | publishable/anon key для проверки токенов |
 | `SUPABASE_URL` | адрес проекта; выводится из `postgres.<ref>` в строке подключения |
 | `GOACADEMY_REQUIRE_AUTH` | `1` по умолчанию; `0` отключает проверку токенов для локальной отладки на SQLite |
+| `APP_TIMEZONE` | часовой пояс приложения для «сегодня» и серии дней, по умолчанию `Europe/Moscow`; без него сервер на Vercel живёт в UTC |
 
 Frontend читает `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` **на этапе
 сборки**. Backend при старте сам читает `.env` из текущего или родительского
@@ -791,7 +792,7 @@ Frontend читает `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` **на э�
 
 | Кто читает | Переменные | Если не заданы |
 | --- | --- | --- |
-| `backend` (runtime) | `SUPABASE_URL`, `PUBLIC_KEY` (publishable key), `SUPABASE_DB_URL` (Session pooler) | `/api/config` не отдаст параметры, вход невозможен |
+| `backend` (runtime) | `SUPABASE_URL`, `PUBLIC_KEY` (publishable key), `SUPABASE_DB_URL` (Session pooler), `APP_TIMEZONE` | `/api/config` не отдаст параметры, вход невозможен; часовой пояс — `Europe/Moscow` |
 | `frontend` (сборка) | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | значения придут из `/api/config` в рантайме |
 
 `VITE_*` встраиваются в статику на этапе `npm run build`, поэтому после изменения

@@ -50,7 +50,7 @@ export function AppShell() {
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar onOpenSearch={() => setPaletteOpen(true)} onOpenMobileNav={() => setMobileOpen(true)} />
 
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main className="flex-1 px-4 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-[1180px]">
             {settingsError ? (
               <div className="mb-4 rounded-lg border border-warning/30 bg-warning-soft/50 px-3 py-2 text-[13px] text-warning">

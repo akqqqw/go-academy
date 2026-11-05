@@ -117,7 +117,7 @@ func (a *Activity) Range(ctx context.Context, days int) ([]Day, error) {
 	if days > 366 {
 		days = 366
 	}
-	today := time.Now()
+	today := time.Now().In(database.Location())
 	start := today.AddDate(0, 0, -(days - 1))
 	startDay := start.Format("2006-01-02")
 
@@ -180,7 +180,7 @@ func (a *Activity) ActiveDays(ctx context.Context) ([]time.Time, error) {
 		if err := rows.Scan(&raw); err != nil {
 			return nil, err
 		}
-		parsed, err := time.ParseInLocation("2006-01-02", raw, time.Local)
+		parsed, err := time.ParseInLocation("2006-01-02", raw, database.Location())
 		if err != nil {
 			continue
 		}
