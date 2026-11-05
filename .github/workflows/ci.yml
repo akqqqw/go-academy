@@ -26,19 +26,8 @@ jobs:
       # Зависимости лежат в vendor/, поэтому сборка не ходит в сеть.
       - name: gofmt
         run: |
-          gofmt -d $(find . -name '*.go' -not -path './vendor/*') > /tmp/gofmt.diff || true
-          if [ -s /tmp/gofmt.diff ]; then
-            echo "Нужно gofmt:"
-            gofmt -l . | grep -v '^vendor/' || true
-            exit 1
-          fi
-      - name: gofmt diff
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gofmt-diff
-          path: /tmp/gofmt.diff
-          if-no-files-found: ignore
+          out=$(gofmt -l . | grep -v '^vendor/' || true)
+          if [ -n "$out" ]; then echo "Нужно gofmt:"; echo "$out"; exit 1; fi
       - name: go vet
         run: go vet -mod=vendor ./...
       - name: go build

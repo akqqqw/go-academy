@@ -874,6 +874,8 @@ cd mobile && npm run lint && npm run typecheck && npm test && npm run export:che
 (три параллельных job: `backend`, `frontend`, `mobile`). Локальная песочница
 разработки может не иметь Go-тулчейна и Docker — тогда компиляцию бэкенда
 проверяет CI, а не разработчик, и в описании PR это отмечается явно.
+На момент написания все три job зелёные: backend собирается (`go vet`,
+`go build`) и все Go-тесты проходят.
 
 ESLint настроен плоско (`frontend/eslint.config.js`,
 `mobile/eslint.config.js`): ошибки — только реальные баги (неиспользуемый код,

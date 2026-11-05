@@ -135,7 +135,12 @@ docker-сокету, а это уже привилегия уровня хост
 
 - `go test ./internal/runner/...` — протокол `RemoteRunner` (запуск, тесты,
   форматирование, статус, отказ без токена), валидация адреса, существующие
-  тесты таймаута и лимита вывода;
+  тесты таймаута и лимита вывода. Эти тесты выполняет CI-job `backend`
+  (`.github/workflows/ci.yml`: `gofmt`, `go vet`, `go build`, `go test` на
+  `vendor/`) и он зелёный на коммите `ee494f8`+;
+- **не проверено:** сам `backend/deploy/coderunner/Dockerfile` ни разу не
+  собирался — в среде разработки нет Docker. Первая сборка образа — на стороне
+  владельца, по шагам из раздела 3;
 - вручную: `curl -H "Authorization: Bearer $TOKEN" -X POST
   http://127.0.0.1:8090/run -d '{"code":"package main\nimport \"fmt\"\nfunc main(){fmt.Println(1)}"}'`
   → `{"status":"ok","stdout":"1\n",...}`;
