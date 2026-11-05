@@ -72,8 +72,10 @@ npm test           # vitest: очередь, разбор Markdown, тексты
 ## 5. Проверки перед коммитом
 
 ```bash
+npm run lint
 npm run typecheck
 npm test
+npm run export:check            # expo export --platform ios: бандл собирается
 npx expo config --type public   # конфиг валиден, плагины и assets на месте
 npx expo-doctor                 # версии пакетов соответствуют SDK
 ```

@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Alert, Modal, Pressable, Text, View } from 'react-native'
+import { Alert, Modal, Pressable, View } from 'react-native'
 
 import type { Note, NotesResponse } from '@shared/types'
 import { formatRelativeDate, plural } from '@shared/utils'

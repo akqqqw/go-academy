@@ -21,7 +21,7 @@ import { api } from '@/api/endpoints'
 import { useCachedQuery } from '@/hooks/use-cached-query'
 import { useSettingsStore } from '@/store/settings'
 import { useSync } from '@/sync/sync-context'
-import { Badge, Body, Button, Caption, Card, ErrorText, Row, Screen, ScreenHeader } from '@/ui/components'
+import { Badge, Body, Button, Caption, Card, ErrorText, Row, ScreenHeader } from '@/ui/components'
 import { useTheme } from '@/ui/theme-context'
 
 const SAMPLE = `package main
@@ -85,13 +85,6 @@ export default function CodeScreen() {
     }
   }, [draftKey])
 
-  useEffect(() => {
-    if (!settings.code_autosave || !dirty.current) return
-    const timer = setTimeout(() => void saveDraft(code, true), 1500)
-    return () => clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- сохраняем по изменению кода
-  }, [code, settings.code_autosave])
-
   const saveDraft = useCallback(
     async (value: string, silent = false) => {
       if (!silent) setSaving(true)
@@ -108,6 +101,13 @@ export default function CodeScreen() {
     },
     [draftKey],
   )
+
+  useEffect(() => {
+    if (!settings.code_autosave || !dirty.current) return
+    const timer = setTimeout(() => void saveDraft(code, true), 1500)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- сохраняем по изменению кода
+  }, [code, settings.code_autosave])
 
   const run = useCallback(async () => {
     const sizeError = validateCodeSize(code)

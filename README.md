@@ -865,9 +865,22 @@ make test            # go vet + go test + tsc + vitest
 
 # по отдельности
 cd backend && go vet ./... && go test ./...
-cd frontend && npm run typecheck && npm test
+cd frontend && npm run lint && npm run typecheck && npm test
 cd frontend && npm run build
+cd mobile && npm run lint && npm run typecheck && npm test && npm run export:check
 ```
+
+Те же команды выполняет GitHub Actions в `.github/workflows/ci.yml`
+(три параллельных job: `backend`, `frontend`, `mobile`). Локальная песочница
+разработки может не иметь Go-тулчейна и Docker — тогда компиляцию бэкенда
+проверяет CI, а не разработчик, и в описании PR это отмечается явно.
+
+ESLint настроен плоско (`frontend/eslint.config.js`,
+`mobile/eslint.config.js`): ошибки — только реальные баги (неиспользуемый код,
+`==`/`!=`, забытые зависимости хуков), а подсказки React Compiler
+(`set-state-in-effect`, `refs`, `purity`) вынесены в предупреждения, потому что
+срабатывают и на легитимных паттернах (синхронизация с `matchMedia`,
+`useRef` для «грязных» форм и редактора).
 
 Что покрыто:
 

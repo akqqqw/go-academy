@@ -21,10 +21,12 @@ interface PendingRow {
 }
 
 function toOp(row: PendingRow): PendingOp {
-  let payload: unknown = {}
+  let payload: unknown
   try {
     payload = JSON.parse(row.payload)
   } catch {
+    // Повреждённая запись не должна ломать очередь: отправляем пустой payload,
+    // сервер отклонит операцию, и она попадёт в «застрявшие».
     payload = {}
   }
   return {
