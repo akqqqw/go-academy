@@ -43,7 +43,7 @@ type Server struct {
 	course       *course.Store
 	cardDecks    *cards.Store
 	exercises    *practice.Store
-	runner       *runner.Runner
+	runner       runner.Executor
 	static       *static.Handler
 	verifier     *auth.Verifier
 	started      time.Time
@@ -72,14 +72,7 @@ func New(cfg config.Config, db *database.DB, logger *slog.Logger) *Server {
 		exAttempts: storage.NewExerciseProgress(db),
 		stats:      progress.New(db, activity, settings),
 		course:     course.NewStore(cfg.ContentDir),
-		runner: runner.New(runner.Config{
-			GoBinary:  cfg.GoBinary,
-			WorkRoot:  cfg.WorkDir(),
-			CacheDir:  cfg.BuildCacheDir(),
-			Timeout:   cfg.RunTimeout,
-			MaxOutput: cfg.RunMaxOutput,
-			MaxCode:   cfg.RunMaxCode,
-		}),
+		runner: newRunner(cfg),
 		static:       static.New(cfg.FrontendDir),
 		started:      time.Now(),
 		routeMethods: map[string][]string{},
@@ -108,6 +101,30 @@ func New(cfg config.Config, db *database.DB, logger *slog.Logger) *Server {
 	}
 	s.handler = s.routes()
 	return s
+}
+
+// newRunner выбирает исполнителя кода.
+//
+// Если задан CODE_RUNNER_URL, код выполняется отдельным сервисом в контейнере
+// (без базы, ключей и сети) — это рекомендуемый режим. Без него работает
+// локальный раннер с лимитами, но без песочницы: интерфейс честно предупреждает
+// об этом через /api/editor/status.
+func newRunner(cfg config.Config) runner.Executor {
+	if cfg.CodeRunnerURL != "" {
+		return runner.NewRemote(runner.RemoteConfig{
+			BaseURL:  cfg.CodeRunnerURL,
+			Token:    cfg.CodeRunnerToken,
+			Isolated: true,
+		})
+	}
+	return runner.New(runner.Config{
+		GoBinary:  cfg.GoBinary,
+		WorkRoot:  cfg.WorkDir(),
+		CacheDir:  cfg.BuildCacheDir(),
+		Timeout:   cfg.RunTimeout,
+		MaxOutput: cfg.RunMaxOutput,
+		MaxCode:   cfg.RunMaxCode,
+	})
 }
 
 // Handler возвращает готовый http.Handler.

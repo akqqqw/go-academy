@@ -1,0 +1,11 @@
+# Контекст сборки сервиса запуска кода (deploy/coderunner/Dockerfile).
+# Нужны только исходники модуля и vendor: ни данные, ни кеши сборки в образ
+# попадать не должны.
+data/
+*.db
+*.db-wal
+*.db-shm
+*.log
+deploy/
+frontend/
+content/

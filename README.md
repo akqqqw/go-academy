@@ -243,7 +243,7 @@ go-academy/
 | `docs/DATABASE.md` | схема Supabase, RLS, локальная база мобильного приложения |
 | `docs/MOBILE_SETUP.md` | запуск, проверки, EAS-сборка, разрешения |
 | `docs/SYNC.md` | офлайн-режим, очередь, идемпотентность, конфликты |
-| `docs/CODE_RUNNER.md` | запуск Go-кода, лимиты, путь к изолированному сервису |
+| `docs/CODE_RUNNER.md` | запуск Go-кода: изолированный сервис в контейнере, лимиты, подключение |
 | `docs/DEPLOYMENT.md` | web + API + мобильные сборки, переменные, откат |
 | `docs/vercel.md` | пошаговый чек-лист первого деплоя на Vercel |
 
@@ -734,6 +734,8 @@ curl -X POST http://127.0.0.1:8080/api/notes \
 | `SUPABASE_URL` | адрес проекта; выводится из `postgres.<ref>` в строке подключения |
 | `GOACADEMY_REQUIRE_AUTH` | `1` по умолчанию; `0` отключает проверку токенов для локальной отладки на SQLite |
 | `APP_TIMEZONE` | часовой пояс приложения для «сегодня» и серии дней, по умолчанию `Europe/Moscow`; без него сервер на Vercel живёт в UTC |
+| `CODE_RUNNER_URL` | адрес изолированного сервиса запуска кода (`docs/CODE_RUNNER.md`); пусто — локальный раннер |
+| `CODE_RUNNER_TOKEN` | общий секрет с сервисом запуска кода (обязателен вместе с URL) |
 
 Frontend читает `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` **на этапе
 сборки**. Backend при старте сам читает `.env` из текущего или родительского
@@ -792,7 +794,7 @@ Frontend читает `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` **на э�
 
 | Кто читает | Переменные | Если не заданы |
 | --- | --- | --- |
-| `backend` (runtime) | `SUPABASE_URL`, `PUBLIC_KEY` (publishable key), `SUPABASE_DB_URL` (Session pooler), `APP_TIMEZONE` | `/api/config` не отдаст параметры, вход невозможен; часовой пояс — `Europe/Moscow` |
+| `backend` (runtime) | `SUPABASE_URL`, `PUBLIC_KEY` (publishable key), `SUPABASE_DB_URL` (Session pooler), `APP_TIMEZONE`, `CODE_RUNNER_URL` + `CODE_RUNNER_TOKEN` | `/api/config` не отдаст параметры, вход невозможен; часовой пояс — `Europe/Moscow`; код выполняется локально |
 | `frontend` (сборка) | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | значения придут из `/api/config` в рантайме |
 
 `VITE_*` встраиваются в статику на этапе `npm run build`, поэтому после изменения

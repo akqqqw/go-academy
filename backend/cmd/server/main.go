@@ -18,6 +18,7 @@ import (
 	"goacademy/internal/config"
 	"goacademy/internal/contentfs"
 	"goacademy/internal/database"
+	"goacademy/internal/runner"
 	"goacademy/internal/storage"
 )
 
@@ -44,6 +45,19 @@ func run(args []string) error {
 		return err
 	}
 	logger.Info("часовой пояс приложения", "timezone", cfg.Timezone)
+
+	// Код учеников: отдельный сервис в контейнере либо локальный запуск.
+	if err := runner.ValidateRemoteURL(cfg.CodeRunnerURL); err != nil {
+		return err
+	}
+	if cfg.CodeRunnerURL != "" {
+		if cfg.CodeRunnerToken == "" {
+			return fmt.Errorf("CODE_RUNNER_URL задан без CODE_RUNNER_TOKEN: сервис запуска кода не должен быть открытым")
+		}
+		logger.Info("код выполняется изолированным сервисом", "url", cfg.CodeRunnerURL)
+	} else {
+		logger.Warn("код выполняется локально: лимиты есть, песочницы нет (см. docs/CODE_RUNNER.md)")
+	}
 
 	// На Vercel корневой content/ не попадает в сервис backend: контент встроен
 	// в бинарник и распаковывается в каталог данных (/tmp). Локально шаг
