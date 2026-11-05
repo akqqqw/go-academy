@@ -56,6 +56,13 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Общие пакеты лежат в ../packages и компилируются как часть приложения:
+      // отдельного шага сборки и npm-публикации не требуется.
+      '@shared/types': fileURLToPath(new URL('../packages/shared-types/src/index.ts', import.meta.url)),
+      '@shared/utils': fileURLToPath(new URL('../packages/shared-utils/src/index.ts', import.meta.url)),
+      '@shared/learning': fileURLToPath(new URL('../packages/shared-learning/src/index.ts', import.meta.url)),
+      '@shared/validation': fileURLToPath(new URL('../packages/shared-validation/src/index.ts', import.meta.url)),
+      '@shared/content': fileURLToPath(new URL('../packages/shared-content/src/index.ts', import.meta.url)),
     },
   },
   server: {

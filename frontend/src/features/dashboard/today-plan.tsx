@@ -1,3 +1,4 @@
+import { planProgress, planItemRatio, studySummary } from '@shared/learning'
 import { Check, CircleDashed, Target } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -7,7 +8,9 @@ import { cn, plural } from '@/lib/utils'
 import type { PlanItem, Snapshot } from '@/types'
 
 function PlanRow({ item }: { item: PlanItem }) {
-  const percent = item.target > 0 ? Math.min(100, (item.current / item.target) * 100) : 0
+  // Доля пункта считается общей функцией из @shared/learning: те же правила
+  // использует мобильное приложение, поэтому цифры совпадают на всех клиентах.
+  const percent = Math.round(planItemRatio(item) * 100)
   const text =
     item.id === 'exercises'
       ? `${item.current} из ${item.target} ${plural(item.target, 'задачи', 'задач', 'задач')}`
@@ -63,10 +66,11 @@ function PlanRow({ item }: { item: PlanItem }) {
 }
 
 export function TodayPlan({ snapshot }: { snapshot: Snapshot }) {
-  const minuteGoal = snapshot.goals.minutes
-  const minutes = snapshot.study.today_minutes
-  const percent = minuteGoal > 0 ? Math.min(100, (minutes / minuteGoal) * 100) : 0
-  const completed = snapshot.plan.filter((item) => item.done).length
+  // Кольцо показывает прогресс плана (сколько пунктов закрыто), а не минуты:
+  // раньше индикатор заполнялся по времени и не сходился с надписью
+  // «Выполнено N из M». Минуты вынесены в отдельную подпись под кольцом.
+  const plan = planProgress(snapshot.plan)
+  const study = studySummary(snapshot)
 
   return (
     <Card className="flex h-full flex-col">
@@ -77,22 +81,25 @@ export function TodayPlan({ snapshot }: { snapshot: Snapshot }) {
             План на сегодня
           </CardTitle>
           <p className="text-[12px] text-fg-muted">
-            Выполнено {completed} из {snapshot.plan.length}
+            Выполнено {plan.done} из {plan.total}
           </p>
         </div>
-        <ProgressRing value={percent} size={54} strokeWidth={5}>
-          <span className="text-[11px] font-semibold tabular-nums text-fg">
-            {Math.min(minutes, minuteGoal)}
-            <span className="text-fg-subtle">/{minuteGoal}</span>
-          </span>
-        </ProgressRing>
+        <div className="text-right">
+          <ProgressRing value={plan.percent} size={54} strokeWidth={5}>
+            <span className="text-[11px] font-semibold tabular-nums text-fg">{plan.percent}%</span>
+          </ProgressRing>
+          <p className="mt-1 text-[11px] tabular-nums text-fg-subtle">
+            {study.todayMinutes} из {study.goalMinutes} мин
+          </p>
+        </div>
       </CardHeader>
       <CardContent className="space-y-1">
         {snapshot.plan.map((item) => (
           <PlanRow key={item.id} item={item} />
         ))}
         <p className="pt-2 text-[11px] leading-relaxed text-fg-subtle">
-          Цели можно изменить в настройках. Время учитывается, пока вкладка активна.
+          Цели можно изменить в настройках. Время учитывается, пока вкладка активна
+          {study.remainingMinutes > 0 ? `, до цели осталось ${study.remainingMinutes} мин` : ', цель по времени выполнена'}.
         </p>
       </CardContent>
     </Card>

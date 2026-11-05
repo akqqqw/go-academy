@@ -8,7 +8,7 @@ FRONTEND_DIR ?= frontend/dist
 ADDR ?= 127.0.0.1:8080
 RUN_TIMEOUT ?= 10
 
-.PHONY: help install dev backend frontend build run test test-backend test-frontend clean fmt doctor
+.PHONY: help install dev backend frontend build run test test-backend test-frontend test-mobile lint clean fmt doctor
 
 help: ## Показать список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -36,13 +36,20 @@ doctor: ## Проверить, что найдены go и node
 	@node --version || echo "Node.js не найден: установите Node.js 20+"
 
 
-test: test-backend test-frontend ## Все тесты
+test: test-backend test-frontend test-mobile ## Все тесты
 
 test-backend: ## Go-тесты и go vet
 	cd backend && $(GO) vet ./... && $(GO) test ./...
 
-test-frontend: ## TypeScript и тесты фронтенда
-	cd frontend && npm run typecheck && npm test
+test-frontend: ## TypeScript, ESLint и тесты фронтенда
+	cd frontend && npm run lint && npm run typecheck && npm test
+
+test-mobile: ## ESLint, TypeScript и тесты мобильного приложения
+	cd mobile && npm run lint && npm run typecheck && npm test
+
+lint: ## ESLint для web и mobile
+	cd frontend && npm run lint
+	cd mobile && npm run lint
 
 fmt: ## Форматирование Go-кода
 	cd backend && gofmt -w $$(find . -name '*.go' -not -path './vendor/*')

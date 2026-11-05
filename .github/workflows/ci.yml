@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'arena/**']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (Go)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+          cache-dependency-path: backend/go.sum
+      # Зависимости лежат в vendor/, поэтому сборка не ходит в сеть.
+      - name: gofmt
+        run: |
+          out=$(gofmt -l . | grep -v '^vendor/' || true)
+          if [ -n "$out" ]; then echo "Нужно gofmt:"; echo "$out"; exit 1; fi
+      - name: go vet
+        run: go vet -mod=vendor ./...
+      - name: go build
+        run: go build -mod=vendor ./...
+      - name: go test
+        run: |
+          set +e
+          go test -mod=vendor ./... 2>&1 | tee /tmp/go-test.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            grep -E '^(--- FAIL|FAIL|panic|# )' /tmp/go-test.log | head -60 | while IFS= read -r line; do
+              echo "::error title=go-test::${line}"
+            done
+            exit 1
+          fi
+
+  frontend:
+    name: Web (Node)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --legacy-peer-deps
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  mobile:
+    name: Mobile (Node)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci --legacy-peer-deps
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run export:check

@@ -180,15 +180,20 @@ func (d *DB) SchemaVersion(ctx context.Context) (int, error) {
 	return version, err
 }
 
-// Now возвращает текущее локальное время в формате RFC3339 (используется во всех таблицах).
-func Now() string { return time.Now().Format(time.RFC3339) }
+// Now возвращает текущее время в формате RFC3339 со смещением часового пояса
+// приложения (используется во всех таблицах).
+func Now() string { return time.Now().In(Location()).Format(time.RFC3339) }
 
 func nowUTC() string { return time.Now().UTC().Format(time.RFC3339) }
 
-// Today возвращает текущую локальную дату в формате YYYY-MM-DD.
-func Today() string { return time.Now().Format("2006-01-02") }
+// Today возвращает текущую дату в формате YYYY-MM-DD в часовом поясе
+// приложения (см. SetLocation). Именно эти даты попадают в activity_days и
+// определяют серию дней, поэтому пояс должен быть стабильным: на Vercel
+// процессы живут в UTC и «сегодня» без явного пояса переключалось бы не в
+// полночь пользователя.
+func Today() string { return time.Now().In(Location()).Format("2006-01-02") }
 
 // ParseTime разбирает время, сохранённое в формате RFC3339 (см. Now).
 func ParseTime(raw string) (time.Time, error) {
-	return time.ParseInLocation(time.RFC3339, raw, time.Local)
+	return time.ParseInLocation(time.RFC3339, raw, Location())
 }

@@ -1,0 +1,9 @@
+node_modules/
+.expo/
+dist/
+.expo-export-check/
+web-build/
+*.log
+.env
+.env.local
+credentials/

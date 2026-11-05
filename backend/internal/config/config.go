@@ -53,6 +53,16 @@ type Config struct {
 	DatabaseURL string
 	// RequireAuth — закрывать ли API без валидной сессии Supabase.
 	RequireAuth bool
+	// CodeRunnerURL — адрес изолированного сервиса запуска кода. Пустая строка
+	// означает локальный запуск (лимиты есть, песочницы нет).
+	CodeRunnerURL string
+	// CodeRunnerToken — общий секрет для сервиса запуска кода.
+	CodeRunnerToken string
+	// Timezone — часовой пояс, в котором считаются «сегодня», дни активности и
+	// серия. На сервере без явного значения процесс живёт в UTC, поэтому пояс
+	// задаётся переменной APP_TIMEZONE (по умолчанию Europe/Moscow: аудитория
+	// курса русскоязычная, и полночь должна наступать по её времени).
+	Timezone string
 }
 
 // DBPath возвращает путь к файлу базы данных.
@@ -109,6 +119,9 @@ func Load(args []string) (Config, error) {
 		supabaseURL = supabaseURLFromDatabase(databaseURL)
 	}
 	requireAuth := envOr("GOACADEMY_REQUIRE_AUTH", "1") != "0"
+	timezone := envOr("APP_TIMEZONE", "Europe/Moscow")
+	codeRunnerURL := strings.TrimRight(envOr("CODE_RUNNER_URL", ""), "/")
+	codeRunnerToken := envOr("CODE_RUNNER_TOKEN", "")
 
 	if err := fs.Parse(args); err != nil {
 		return Config{}, err
@@ -134,6 +147,9 @@ func Load(args []string) (Config, error) {
 		SupabaseKey:     supabaseKey,
 		DatabaseURL:     databaseURL,
 		RequireAuth:     requireAuth,
+		Timezone:        timezone,
+		CodeRunnerURL:   codeRunnerURL,
+		CodeRunnerToken: codeRunnerToken,
 	}
 	for _, origin := range strings.Split(*origins, ",") {
 		if trimmed := strings.TrimSpace(origin); trimmed != "" {

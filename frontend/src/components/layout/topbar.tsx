@@ -34,12 +34,12 @@ export function Topbar({
   const nextTheme = isDark ? 'light' : 'dark'
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line bg-canvas/80 px-4 backdrop-blur-xl sm:px-6">
+    <header className="sticky top-0 z-20 flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center gap-3 border-b border-line bg-canvas/80 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:px-6">
       <button
         type="button"
         onClick={onOpenMobileNav}
         aria-label="Открыть навигацию"
-        className="grid size-9 place-items-center rounded-md text-fg-muted transition-colors hover:bg-surface-muted hover:text-fg lg:hidden"
+        className="grid size-11 place-items-center rounded-md text-fg-muted transition-colors hover:bg-surface-muted hover:text-fg sm:size-9 lg:hidden"
       >
         <Menu className="size-[18px]" />
       </button>

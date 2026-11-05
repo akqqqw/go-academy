@@ -43,6 +43,8 @@ type CardsStat struct {
 
 // QuizStat — статистика тестов.
 type QuizStat struct {
+	// Passed — сколько разных тестов пройдено (COUNT(DISTINCT quiz_id)),
+	// а не сколько было попыток.
 	Passed         int `json:"passed"`
 	Total          int `json:"total"`
 	AnswersCorrect int `json:"answers_correct"`
@@ -144,7 +146,9 @@ func (s *Service) Snapshot(ctx context.Context, totals Totals) (Snapshot, error)
 			 WHERE total > 0 AND passed = total),
 			(SELECT COUNT(DISTINCT card_id) FROM card_reviews),
 			(SELECT COUNT(*) FROM flashcards WHERE due_at IS NOT NULL AND due_at <= ?),
-			(SELECT COUNT(*) FROM quiz_attempts WHERE total > 0),
+			-- «Тестов пройдено» — именно тесты, а не попытки: повторное
+			-- прохождение того же теста не должно увеличивать счётчик.
+			(SELECT COUNT(DISTINCT quiz_id) FROM quiz_attempts WHERE total > 0),
 			(SELECT COALESCE(SUM(score), 0) FROM quiz_attempts),
 			(SELECT COALESCE(SUM(total), 0) FROM quiz_attempts)`,
 		database.Now())
@@ -176,7 +180,7 @@ func (s *Service) Snapshot(ctx context.Context, totals Totals) (Snapshot, error)
 	if err != nil {
 		return Snapshot{}, err
 	}
-	current, longest, todayActive := CalcStreak(activeDays, time.Now())
+	current, longest, todayActive := CalcStreak(activeDays, time.Now().In(database.Location()))
 
 	settings, err := s.settings.All(ctx)
 	if err != nil {
@@ -308,11 +312,19 @@ func CalcStreak(days []time.Time, now time.Time) (current, longest int, todayAct
 	return storage.CalcStreak(days, now)
 }
 
+// percent считает долю в процентах и всегда возвращает 0..100.
+//
+// Кламп важен для карточек: в числителе — все повторённые карточки, включая
+// созданные пользователем, а в знаменателе — карточки из контента. Без
+// ограничения такой прогресс показывал бы больше 100%.
 func percent(part, total int) int {
 	if total <= 0 {
 		return 0
 	}
 	value := part * 100 / total
+	if value < 0 {
+		return 0
+	}
 	if value > 100 {
 		return 100
 	}

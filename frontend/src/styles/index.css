@@ -14,12 +14,14 @@
   --border-strong: #cdd2dd;
   --fg: #12151c;
   --fg-muted: #5a6373;
-  --fg-subtle: #838c9c;
-  --primary: #0a7ea4;
+  /* Контраст проверяют тесты: fg-subtle ≥ 4.5:1 на canvas и surface,
+     primary — тоже, а primary-fg на primary остаётся ≥ 4.5:1. */
+  --fg-subtle: #68707f;
+  --primary: #0a7497;
   --primary-hover: #096c8d;
   --primary-fg: #ffffff;
-  --primary-soft: rgba(10, 126, 164, 0.1);
-  --primary-ring: rgba(10, 126, 164, 0.35);
+  --primary-soft: rgba(10, 116, 151, 0.1);
+  --primary-ring: rgba(10, 116, 151, 0.35);
   --success: #15803d;
   --success-soft: rgba(21, 128, 61, 0.12);
   --warning: #b45309;
@@ -56,7 +58,7 @@
   --border-strong: #2c3240;
   --fg: #e9ecf4;
   --fg-muted: #939bad;
-  --fg-subtle: #6b7385;
+  --fg-subtle: #7a8295;
   --primary: #26c9e8;
   --primary-hover: #4ad8f0;
   --primary-fg: #04161c;

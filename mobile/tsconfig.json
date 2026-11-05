@@ -1,0 +1,41 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@shared/types": [
+        "../packages/shared-types/src/index.ts"
+      ],
+      "@shared/utils": [
+        "../packages/shared-utils/src/index.ts"
+      ],
+      "@shared/learning": [
+        "../packages/shared-learning/src/index.ts"
+      ],
+      "@shared/validation": [
+        "../packages/shared-validation/src/index.ts"
+      ],
+      "@shared/content": [
+        "../packages/shared-content/src/index.ts"
+      ]
+    },
+    "types": [
+      "expo",
+      "react",
+      "node"
+    ]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

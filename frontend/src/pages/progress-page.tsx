@@ -29,7 +29,6 @@ export function ProgressPage() {
   const course = useCourse()
 
   const snapshot = progress.data?.snapshot
-  const totals = progress.data?.totals
 
   return (
     <div className="space-y-5">
@@ -52,7 +51,7 @@ export function ProgressPage() {
         <ErrorState message={progress.error.message} onRetry={() => void progress.refetch()} />
       ) : null}
 
-      {snapshot && totals ? (
+      {snapshot ? (
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="flex flex-col">
             <CardHeader>
@@ -294,8 +293,8 @@ export function ProgressPage() {
                   {
                     label: 'Практические задачи',
                     value:
-                      totals && totals.exercises > 0
-                        ? `${snapshot.exercises.solved} из ${totals.exercises}`
+                      snapshot.exercises.total > 0
+                        ? `${snapshot.exercises.solved} из ${snapshot.exercises.total}`
                         : 'раздел готовится',
                   },
                   {
@@ -309,8 +308,8 @@ export function ProgressPage() {
                   {
                     label: 'Тестов пройдено',
                     value:
-                      totals && totals.quizzes > 0
-                        ? `${snapshot.quizzes.passed} из ${totals.quizzes}`
+                      snapshot.quizzes.total > 0
+                        ? `${snapshot.quizzes.passed} из ${snapshot.quizzes.total}`
                         : 'раздел готовится',
                   },
                   {

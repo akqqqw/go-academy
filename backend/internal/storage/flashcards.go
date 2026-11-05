@@ -262,7 +262,7 @@ func (f *Flashcards) Overview(ctx context.Context) ([]DeckView, CardStats, error
 
 // Stats считает сводку по всем карточкам.
 func (f *Flashcards) Stats(ctx context.Context) (CardStats, error) {
-	today := time.Now().Format("2006-01-02") + "T00:00:00"
+	today := time.Now().In(database.Location()).Format("2006-01-02") + "T00:00:00"
 	stats := CardStats{}
 
 	var successful int
@@ -303,7 +303,7 @@ func (f *Flashcards) reviewDays(ctx context.Context, days int) ([]DayCount, erro
 	if days <= 0 {
 		return []DayCount{}, nil
 	}
-	today := time.Now()
+	today := time.Now().In(database.Location())
 	out := make([]DayCount, 0, days)
 	byDate := make(map[string]int, days)
 
@@ -356,7 +356,7 @@ func (f *Flashcards) streak(ctx context.Context) (int, error) {
 	if len(dates) == 0 {
 		return 0, nil
 	}
-	today := time.Now()
+	today := time.Now().In(database.Location())
 	expected := today.Format("2006-01-02")
 	if dates[0] != expected {
 		// Серия может начаться вчера: сегодня ещё не занимались.
@@ -371,7 +371,7 @@ func (f *Flashcards) streak(ctx context.Context) (int, error) {
 			break
 		}
 		streak++
-		parsed, err := time.ParseInLocation("2006-01-02", expected, time.Local)
+		parsed, err := time.ParseInLocation("2006-01-02", expected, database.Location())
 		if err != nil {
 			return streak, nil
 		}
