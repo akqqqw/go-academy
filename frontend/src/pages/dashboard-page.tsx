@@ -67,7 +67,7 @@ export function DashboardPage() {
             <TodayPlan snapshot={dashboard.data.snapshot} />
           </div>
 
-          <StatsGrid snapshot={dashboard.data.snapshot} totals={dashboard.data.totals} />
+          <StatsGrid snapshot={dashboard.data.snapshot} />
 
           {dashboard.data.achievements && dashboard.data.achievements.length > 0 ? (
             <AchievementsStrip achievements={dashboard.data.achievements} snapshot={dashboard.data.snapshot} />

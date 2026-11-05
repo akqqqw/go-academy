@@ -1,14 +1,21 @@
+import { studySummary } from '@shared/learning'
 import { CheckCircle2, Clock3, Flame, Layers, ListChecks } from 'lucide-react'
 
 import { StatTile } from '@/components/stat-tile'
 import { formatDuration } from '@/lib/utils'
-import type { Snapshot, Totals } from '@/types'
+import type { Snapshot } from '@/types'
 
-export function StatsGrid({ snapshot, totals }: { snapshot: Snapshot; totals: Totals }) {
+/**
+ * Плитки статистики. Все подписи и полосы берутся из одного объекта snapshot:
+ * раньше «из N» приходило из totals (контент), а прогресс — из snapshot, и при
+ * расхождении источников цифры на плитке противоречили друг другу.
+ */
+export function StatsGrid({ snapshot }: { snapshot: Snapshot }) {
   const lessons = snapshot.lessons
   const exercises = snapshot.exercises
   const cards = snapshot.cards
   const study = snapshot.study
+  const summary = studySummary(snapshot)
 
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -25,7 +32,7 @@ export function StatsGrid({ snapshot, totals }: { snapshot: Snapshot; totals: To
         icon={ListChecks}
         label="Задачи"
         value={`${exercises.solved}`}
-        hint={totals.exercises > 0 ? `из ${totals.exercises}` : 'скоро'}
+        hint={exercises.total > 0 ? `из ${exercises.total}` : 'скоро'}
         accent="success"
         progress={exercises.total > 0 ? exercises.percent : 0}
         className="animate-fade-up stagger-1"
@@ -34,7 +41,7 @@ export function StatsGrid({ snapshot, totals }: { snapshot: Snapshot; totals: To
         icon={Layers}
         label="Карточки"
         value={`${cards.reviewed}`}
-        hint={totals.flashcards > 0 ? `из ${totals.flashcards}` : 'скоро'}
+        hint={cards.total > 0 ? `из ${cards.total}` : 'скоро'}
         accent="violet"
         progress={cards.total > 0 ? cards.percent : 0}
         className="animate-fade-up stagger-2"
@@ -43,13 +50,9 @@ export function StatsGrid({ snapshot, totals }: { snapshot: Snapshot; totals: To
         icon={Clock3}
         label="Время обучения"
         value={study.total_minutes > 0 ? formatDuration(study.total_seconds) : '0 мин'}
-        hint={`сегодня ${study.today_minutes} мин`}
+        hint={`за сегодня ${summary.todayMinutes} мин`}
         accent="warning"
-        progress={
-          snapshot.goals.minutes > 0
-            ? Math.min(100, (study.today_minutes / snapshot.goals.minutes) * 100)
-            : 0
-        }
+        progress={summary.goalPercent}
         className="animate-fade-up stagger-3"
       />
       <div className="col-span-2 flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 shadow-card lg:col-span-4">
