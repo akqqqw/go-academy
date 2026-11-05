@@ -103,18 +103,18 @@ mobile/
 ├── app/                        файловая маршрутизация Expo Router
 │   ├── (auth)/login|register|reset.tsx
 │   ├── (tabs)/index|learn|code|cards|profile.tsx
-│   ├── lesson/[lessonId].tsx
-│   ├── exercise/[exerciseId].tsx
-│   ├── quiz/[quizId].tsx
-│   └── notes.tsx, achievements.tsx, settings.tsx
+│   ├── lesson/[lessonId].tsx, exercise/[exerciseId].tsx
+│   └── notes.tsx, quizzes.tsx, achievements.tsx, settings.tsx
 ├── src/
 │   ├── api/                    клиент Go-API с Bearer и refresh
 │   ├── auth/                   Supabase-сессия, SecureStore
 │   ├── db/                     expo-sqlite: кэш контента, журнал изменений, очередь
 │   ├── sync/                   отправка очереди, разрешение конфликтов
 │   ├── ui/                     нативные компоненты и дизайн-токены
-│   ├── store/                  Zustand: сессия, настройки, офлайн-статус
-│   └── notifications/          Expo Notifications и расписание напоминаний
+│   ├── store/                  Zustand: настройки и тема
+│   ├── hooks/                  useCachedQuery: кэш сначала, сеть потом
+│   ├── lib/                    конфигурация, склейка Markdown
+│   └── features/notifications/ Expo Notifications: opt-in напоминания
 └── app.config.ts, eas.json, metro.config.js
 ```
 
